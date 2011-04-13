@@ -39,6 +39,10 @@ class Adjustment(ImageProcessor):
                     pass
         return img, fmt
 
+"""
+ICCProofTransform and ICCTransform should both get refactored -- probably, they should
+inherit from a common abstract ancestor that implements process() in a non-stupid way.
+"""
 
 """
 >>> from PIL import ImageCms
