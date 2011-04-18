@@ -231,8 +231,6 @@ class ICCImageModel(ImageModel):
     """
     __metaclass__ = ImageModelBase
     
-    _icc = None
-    
     class Meta:
         abstract = True
     
@@ -280,9 +278,7 @@ class ICCImageModel(ImageModel):
     
     @property
     def icc(self):
-        if not self._icc:
-            self._icc = ICCProfile(self.pilimage.info.get('icc_profile'))
-        return self._icc
+        return ICCProfile(self.pilimage.info.get('icc_profile'))
     
     def _save_iccprofile(self, svpth=None):
         savepath = self._get_iccfilepath()
@@ -307,9 +303,8 @@ class ICCImageModel(ImageModel):
             return None
     
     def save(self, clear_cache=True, *args, **kwargs):
-        dest_icc = self.icc
-        if self._ik.icc_field and dest_icc._data:
-            self._iccfield = dest_icc
+        if hasattr(self._ik, 'icc_field'):
+            self._iccfield = self.icc
         super(ICCImageModel, self).save(clear_cache, *args, **kwargs)
     
     def _clear_iccprofile(self):
