@@ -14,6 +14,7 @@ from django.utils.translation import ugettext_lazy as _
 from imagekit import specs
 from imagekit.lib import *
 from imagekit.options import Options
+from imagekit.memoize import memoize
 from imagekit.utils import img_to_fobj
 from imagekit.delegate import DelegateManager, delegate
 from imagekit.ICCProfile import ICCProfile, ADict
@@ -299,6 +300,13 @@ class RGBHistogram(HistogramBase):
     G = HistogramField(channel='G', verbose_name="Green")
     B = HistogramField(channel='B', verbose_name="Blue")
 
+@memoize
+def ICCTransformerForProfileData(icc=None):
+    if icc:
+        if hasattr(icc, 'transformer'):
+            return icc.transformer
+    return icc
+
 class ImageWithMetadata(ImageModel):
     class Meta:
         abstract = True
@@ -330,6 +338,10 @@ class ImageWithMetadata(ImageModel):
         editable=False,
         pil_reference=lambda: 'pilimage',
         null=True)
+    
+    @property
+    def icctransformer(self):
+        return ICCTransformerForProfileData(self.icc)
     
     def save(self, force_insert=False, force_update=False):
         self.save_related_histograms(instance=self)
@@ -412,6 +424,10 @@ class ICCModel(models.Model):
         default=datetime.now,
         blank=True,
         editable=False)
+    
+    @property
+    def icctransformer(self):
+        return ICCTransformerForProfileData(self.icc)
     
     def save(self, force_insert=False, force_update=False):
         self.modifydate = datetime.now()
