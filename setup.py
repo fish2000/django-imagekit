@@ -22,6 +22,15 @@ setup(
     maintainer_email='bryan@revyver.com',
     license='BSD',
     url='http://github.com/jdriscoll/django-imagekit/',
+    install_requires=[
+        'django',
+        'numpy',
+        'scipy',
+        'struct',
+        'uuid',
+        'hashlib',
+        'PIL',
+    ],
     packages=[
         'imagekit',
         'imagekit.management',
