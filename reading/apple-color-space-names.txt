@@ -1,0 +1,66 @@
+The XYZ data color space.
+
+The L*a*b* data color space.
+
+The L*u*v* data color space.
+
+cmYCbCrData
+
+cmYxyData
+
+cmRGBData
+
+cmSRGBData
+
+cmGrayData
+
+cmHSVData
+
+cmHLSData
+
+cmCMYKData
+
+cmCMYData
+
+cmMCH5Data
+
+cmMCH6Data
+
+cmMCH7Data
+
+cmMCH8Data
+
+cm3CLRData
+
+cm4CLRData
+
+cm5CLRData
+
+cm6CLRData
+
+cm7CLRData
+
+cm8CLRData
+
+cm9CLRData
+
+cm10CLRData
+
+cm11CLRData
+Available in Mac OS X v10.1 and later.
+Declared in ColorSyncDeprecated.h.
+cm12CLRData
+Available in Mac OS X v10.1 and later.
+Declared in ColorSyncDeprecated.h.
+cm13CLRData
+Available in Mac OS X v10.1 and later.
+Declared in ColorSyncDeprecated.h.
+cm14CLRData
+Available in Mac OS X v10.1 and later.
+Declared in ColorSyncDeprecated.h.
+cm15CLRData
+Available in Mac OS X v10.1 and later.
+Declared in ColorSyncDeprecated.h.
+cmNamedData
+Available in Mac OS X v10.0 and later.
+Declared in ColorSyncDeprecated.h.
