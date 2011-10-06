@@ -1,5 +1,15 @@
 #/usr/bin/env python
-from distutils.core import setup, Extension
+#from distutils.core import setup, Extension
+
+try:
+    from setuptools import setup, Extension
+except ImportError:
+    from ez_setup import use_setuptools
+    use_setuptools()
+    from setuptools import setup, find_packages
+    from setuptools.command.test import test
+
+
 from Cython.Distutils import build_ext
 import numpy
 

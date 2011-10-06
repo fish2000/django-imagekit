@@ -7,7 +7,13 @@
 
 .DS_Store
 
-dist
-build
+*.tmproj
+*.bbprojectd
+*.bbprojectd/
+*~
+
+dist/
+build/
+django_imagekit.egg-info/
 MANIFEST
 migrations/
