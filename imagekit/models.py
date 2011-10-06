@@ -20,7 +20,6 @@ from imagekit import signals as iksignals
 from imagekit import specs
 from imagekit.lib import *
 from imagekit.options import Options
-from imagekit.modelfields import VALID_CHANNELS, to_matrix
 from imagekit.ICCProfile import ICCProfile
 from imagekit.utils import logg, hexstr
 from imagekit.utils import itersubclasses
@@ -28,7 +27,6 @@ from imagekit.utils import icchash as icchasher
 from imagekit.utils.memoize import memoize
 from imagekit.modelfields import ICCField, ICCHashField, RGBColorField
 from imagekit.modelfields import ICCDataField, ICCMetaField, EXIFMetaField
-from imagekit.modelfields import HistogramChannelField, Histogram
 from imagekit.modelfields import ImageHashField
 
 # Modify image file buffer size.
@@ -222,185 +220,6 @@ class ImageModel(models.Model):
         iksignals.clear_cache.send_now(sender=self.__class__, instance=self)
 
 
-class HistogramBase(models.Model):
-    """
-    Model representing a 1-dimensional image histogram.
-    
-    HistogramBase implements a GenericForeignKey to connect to its parent
-    ImageWithMetadata instance. The assumption is that ImageWithMetadata
-    subclasses use the default PositiveIntegers for their respective
-    id fields -- I'm not a super-huge fan of the willy-nilly use of generic
-    relations but this is a pretty certifiable use-case; performance is more of an
-    issue with the histogram data itself (w/r/t joins and such)
-    so I'm OK with it here. Caveat Implementor.
-    
-    """
-    
-    class Meta:
-        abstract = True
-        verbose_name = "Histogram"
-        verbose_name_plural = "Histograms"
-    
-    content_type = models.ForeignKey(ContentType,
-        blank=True,
-        null=True) # GFK default
-    
-    object_id = models.PositiveIntegerField(verbose_name="Object ID",
-        blank=True,
-        null=True) # GFK default
-    
-    imagewithmetadata = generic.GenericForeignKey(
-        'content_type',
-        'object_id')
-    
-    def __repr__(self):
-        return "<%s #%s>" % (self.__class__.__name__, self.pk)
-    
-    def __getitem__(self, channel):
-        if not channel:
-            raise KeyError("No channel index specified.")
-        
-        if not isinstance(channel, basestring):
-            raise TypeError("Channel index must be one of: %s" % ', '.join(VALID_CHANNELS))
-        
-        if channel not in VALID_CHANNELS:
-            raise IndexError("Channel index must be one of: %s" % ', '.join(VALID_CHANNELS))
-        
-        if not hasattr(self, 'image'):
-            raise NotImplementedError("No 'image' property found on %s." % repr(self))
-        
-        if not self.image:
-            raise ValueError("HistogramBase %s has no valid ImageWithMetadata associated with it." % repr(self))
-        
-        pilimage = self.image.pilimage
-        
-        if not pilimage:
-            raise ValueError("No PIL image defined!")
-        
-        if channel not in self.keys():
-            raise KeyError("%s has no histogram for channel %s." % (repr(self), channel))
-        
-        return getattr(self, channel)
-    
-    @property
-    def image(self):
-        return self.imagewithmetadata
-    
-    def keys(self):
-        out = []
-        for field in self._meta.fields:
-            if isinstance(field, HistogramChannelField):
-                out.append(field.name)
-        return out
-    
-    def values(self):
-        out = []
-        for field in self._meta.fields:
-            if isinstance(field, HistogramChannelField):
-                out.append(self[field.name])
-        return out
-    
-    def items(self):
-        return zip(self.keys(), self.values())
-    
-    # distance:
-    # math.sqrt(reduce(operator.add, map(lambda h,i: h*(i**2), abs(axim.histogram_rgb.all - pxim.histogram_rgb.all), range(256*3))) / float(axim.w) * axim.h)
-    
-    def normalized(self, channel):
-        # ch*255.0/sum(ch)
-        return self[channel].astype(float) / max(self[channel])
-    
-    @property
-    def all(self):
-        out = []
-        for channel in self.keys():
-            for i in xrange(256):
-                out.append(getattr(self, "__%s_%02X" % (channel, i)))
-        return to_matrix(out)
-    
-    @property
-    def entropy(self):
-        """
-        Calculate the entropy of an images' histogram. Used for "smart cropping" in easy-thumbnails;
-        see: https://raw.github.com/SmileyChris/easy-thumbnails/master/easy_thumbnails/utils.py
-        
-        """
-        hist_size = float(sum(self.all))
-        hist = [h / hist_size for h in self.all]
-        return -sum([p * math.log(p, 2) for p in hist if p != 0])
-
-
-"""
-HISTOGRAM IMPLEMENTATIONS.
-
-Histograms are subclasses of the abstract base model HistogramBase that are defined with one or more
-channels, represented with HistogramChannelFields. Histograms are computed from the PIL representation
-of the model object's image data -- the channel flag for each HistogramChannelField in the histogram
-has to be a character found in the 'mode' attribute of the PIL image object (pilimage.mode). If you
-want to compute a histogram from a dimension that isn't necessarily found in your images' mode attribute,
-you can use the pil_reference kwarg as below in LumaHistogram's implementation.
-
-When passed to a HistogramChannelField, the pil_reference kwarg needs to provide either a string
-or a callable that will yield a PIL object from which we should extract histogram data. the default
-is 'pilimage', which can be expressed with a callable like so:
-
-    class MyHistogram(HistogramBase):
-        L = HistogramChannelField(channel="L", pil_reference=lambda instance: getattr(instance, 'pilimage'))
-
-For LumaHistogram, I'm getting the image luminosity data like so:
-
-    class MyHistogram(HistogramBase):
-        L = HistogramChannelField(channel="L", pil_reference=lambda instance: instance.pilimage.convert('L'))
-
-More complex callables can be used as well:
-
-    def histogram_with_multmask(instance):
-        from PIL import Image, ImageChops
-        mask_image = "/home/me/MyShit/maskimage.jpg"
-        return ImageChops.multiply(Image.open(mask_image), instance).convert('L')
-    
-    class MyHistogram(HistogramBase):
-        M = HistogramChannelField(channel="L", pil_reference=histogram_with_multmask)
-
-"""
-
-
-class LumaHistogram(HistogramBase):
-    """
-    Luma histogram implementation. It uses one 8-bit channel, L -- a copy of
-    the related image is converted to 'L' mode, as per "pil_reference" (below)
-    and used when populating LumaHistogram during save and instantiation.
-    
-    """
-    class Meta:
-        abstract = False
-        verbose_name = "Luma Histogram"
-        verbose_name_plural = "Luma Histograms"
-    
-    L = HistogramChannelField(channel='L',
-            verbose_name="Luma",
-            pil_reference=lambda instance: instance.pilimage.convert('L'))
-
-class RGBHistogram(HistogramBase):
-    """
-    RGB histogram implementation. One channel for each of the primaries in RGB.
-    
-    """
-    class Meta:
-        abstract = False
-        verbose_name = "RGB Histogram"
-        verbose_name_plural = "RGB Histograms"
-    
-    R = HistogramChannelField(channel='R', verbose_name="Red")
-    G = HistogramChannelField(channel='G', verbose_name="Green")
-    B = HistogramChannelField(channel='B', verbose_name="Blue")
-
-
-"""
-ImageWithMetadata model.
-
-
-"""
 class ImageWithMetadataQuerySet(models.query.QuerySet):
     
     def __init__(self, *args, **kwargs):
@@ -457,10 +276,6 @@ class ImageWithMetadata(ImageModel):
         verbose_name = "Image Metadata Objects"
     
     objects = ImageWithMetadataManager()
-    
-    # All we got right now is Luma and RGB. Come back tomorrow you want more colorspaces.
-    histogram_luma = Histogram(colorspace="Luma")
-    histogram_rgb = Histogram(colorspace="RGB")
     
     # We can sort by these color values.
     dominantcolor = RGBColorField(verbose_name="Dominant Color",
@@ -699,27 +514,10 @@ else:
     # 'models inspector' sounds like the punchline of a junior-high-era joke
     add_introspection_rules(
         rules = [
-            ((HistogramChannelField,), [], {
-                'add_columns': ('add_columns', {}),
-            }),
-        ], patterns = [
-            '^imagekit\.modelfields\.HistogramChannelField',
-        ]
-    )
-    add_introspection_rules(
-        rules = [
             ((ICCField,), [], {
             }),
         ], patterns = [
             '^imagekit\.modelfields\.ICCField',
         ]
     )
-
-
-
-# Histogram type string map (at the end so we're typesafe)
-# XYZHistogram and LabHistogram implementations TBD
-HISTOGRAMS = { 'luma': LumaHistogram, 'rgb': RGBHistogram, }
-
-
 
