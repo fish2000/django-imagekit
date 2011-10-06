@@ -1,7 +1,6 @@
 """ Default ImageKit configuration """
 
 from imagekit import processors
-from imagekit.spec import ImageSpec
 
 class ResizeThumbnail(processors.Resize):
     width = 100

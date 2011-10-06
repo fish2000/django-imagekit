@@ -264,15 +264,16 @@ class IKTest(TestCase):
         img = self.generate_image()
         
         path = self.p.image.name
-        self.p.save_image('test2.jpeg', ContentFile(img.read()))
-        self.failIf(self.p._ik.storage.exists(path))
+        self.p.save_image('test2.jpeg', ContentFile(img.read()), replace=True)
+        self.assertTrue(self.p._ik.storage.exists(path))
         
         path = self.p.image.name
         img.seek(0)
-        self.p.save_image('test.jpeg', ContentFile(img.read()))
-        self.failIf(self.p._ik.storage.exists(path))
+        self.p.save_image('test3.jpeg', ContentFile(img.read()), replace=True)
+        self.assertTrue(self.p._ik.storage.exists(path))
         
         img.close()
+        self.p.delete(clear_cache=True)
     
     def test_icc_transform(self):
         self.assertTrue(self.p.icctrans.url is not None)
