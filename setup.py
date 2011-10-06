@@ -9,9 +9,9 @@ except ImportError:
     from setuptools import setup, find_packages
     from setuptools.command.test import test
 
-
 from Cython.Distutils import build_ext
 import numpy
+import imagekit
 
 import os
 import sys
@@ -28,7 +28,7 @@ if 'publish' in sys.argv:
 
 setup(
     name='django-imagekit',
-    version=imagekit.__version__,
+    version='%s.%s.%s' % imagekit.__version__,
     description='Automated image processing for Django models.',
     author='Justin Driscoll',
     author_email='justin@driscolldev.com',
@@ -86,7 +86,7 @@ setup(
     
     
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Environment :: Web Environment',
         'Framework :: Django',
         'Intended Audience :: Developers',
