@@ -2,13 +2,15 @@ Original Author:
 
 * Justin Driscoll (jdriscoll)
 
+This Fork (color management additions):
 
-Maintainers:
+* Alexander Böhn
+
+Upstream Maintainers:
 
 * Bryan Veloso (bryanveloso)
 * Chris Drackett (chrisdrackett)
 * Greg Newman (gregnewman)
-
 
 Contributors:
 
@@ -18,3 +20,6 @@ Contributors:
 * Markus Kaiserswerth (mkai)
 * Ryan Bagwell (ryanbagwell)
 
+ICCProfile.py class derived from work by:
+
+* Florian Höch
