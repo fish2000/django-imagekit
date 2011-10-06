@@ -181,22 +181,6 @@ class ICCTransform(ImageProcessor):
         return ICCProofTransform.process(img, fmt, obj, source=cls.source, destination=cls.destination, proofing=False, TXID=TXID)
 
 
-class HSVArray(ImageProcessor):
-    """
-    Convert to HSV using NumPy and return as an array.
-    
-    """
-    format = 'array'
-    
-    @classmethod
-    def process(cls, img, fmt, obj):
-        from scikits.image import color
-        
-        rgb_array = numpy.array(img.getdata(), numpy.uint8).reshape(img.size[0], img.size[1], 3)
-        hsv_array = color.rgb2hsv(rgb_array.astype(numpy.float32) / 255)
-        return hsv_array, 
-
-
 class NeuQuantize(ImageProcessor):
     """
     Extract and return a 256-color quantized LUT of the images' dominant colors.
