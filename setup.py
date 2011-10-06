@@ -1,5 +1,7 @@
 #/usr/bin/env python
-from distutils.core import setup
+from distutils.core import setup, Extension
+from Cython.Distutils import build_ext
+import numpy
 
 setup(
     name='django-imagekit',
@@ -12,7 +14,7 @@ setup(
     license='BSD',
     url='http://github.com/jdriscoll/django-imagekit/',
     install_requires=[
-        'django',
+        'cython',
         'django-signalqueue>=0.2.8',
         'django-delegate>=0.1.8',
         'pil',
@@ -20,9 +22,46 @@ setup(
     ],
     packages=[
         'imagekit',
+        'imagekit.colors',
+        'imagekit.etc',
+        'imagekit.ext',
         'imagekit.management',
         'imagekit.management.commands'
+        'imagekit.templatetags',
+        'imagekit.utils',
     ],
+    package_data={
+        'imagekit.colors': [
+            'sea.jpg',
+            'aggregated/*/*.xml',
+            'context/*.txt',
+        ],
+        'imagekit': [
+            'etc/*.csv',
+            'etc/*.xls',
+            'static/imagekit/css/*.css',
+            'static/imagekit/js/*.js',
+            'static/imagekit/images/*.png',
+            'static/imagekit/images/colorpicker/*.png',
+            'static/imagekit/flot/*.js',
+            'static/imagekit/flot/*.txt',
+            'templates/*.html',
+        ],
+    },
+    
+    
+    ext_modules=[
+        Extension("imagekit.ext.processors", ["imagekit/ext/processors.pyx"]),
+    ],
+    cmdclass=dict(
+        build_ext=build_ext,
+    ),
+    include_dirs=[
+        numpy.get_include(),
+        ".",
+    ],
+    
+    
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Web Environment',
