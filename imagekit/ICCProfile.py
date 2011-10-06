@@ -1648,6 +1648,7 @@ class ICCTransformer(ICCProfile):
                 self.fr = other.getRGBLinearizer(channel='r', scale=scale)
                 self.fg = other.getRGBLinearizer(channel='g', scale=scale)
                 self.fb = other.getRGBLinearizer(channel='b', scale=scale)
+            
             def __call__(self, r=0.0, g=0.0, b=0.0):
                 return (
                     self.fr(r),
@@ -1667,73 +1668,10 @@ class ICCTransformer(ICCProfile):
                 self.fb = other.getRGBCompander(channel='b', scale=scale)
                 self.as_hex = False
             
-            def __call__(self, **kwargs):
-                
-                if 'as_hex' in kwargs:
-                    self.as_hex = kwargs.pop('as_hex')
-                    return self(**kwargs.copy())
-                
-                if len(kwargs) == 0:
-                    # r=0.0, g=0.0, b=0.0
-                    return ( self.fr(0.0), self.fg(0.0), self.fb(0.0), )
-                    
-                elif len(kwargs) == 1:
-                    ar = kwargs.pop(kwargs.keys().pop())
-                    
-                    # special cases
-                    if hasallcase(ar, 'xyz'):
-                        # it's an XYZNumber/XYZType/aptly-assigned AODict/ADict/dict:
-                        logg.warning('dict-ish object passed to RGBTristimulusCompander() with "x,y,z" amongst its attribute')
-                        return ( self.fr(getcase('x')), self.fg(getcase('y')), self.fb(getcase('z')), )
-                    
-                    elif hasallcase(ar, 'rgb'):
-                        return ( self.fr(getcase('r')), self.fg(getcase('g')), self.fb(getcase('b')), )
-                    
-                    # NORMALS.
-                    if isinstance(ar, (types.IntType, types.FloatType, types.LongType, types.ComplexType)):
-                        return ( self.fr(ar), self.fg(ar), self.fb(ar), )
-                    
-                    elif isinstance(ar, (types.FunctionType, types.MethodType)):
-                        #return ( self.fr(ar()), self.fg(ar()), self.fb(ar()), )
-                        back = ar()
-                        return self(**dict(args=ar))
-                        
-                        try:
-                            len(ar)
-                        except TypeError:
-                            return ar # not sure hoss
-                        
-                        if len(ar) > 2:
-                            
-                            if isinstance(ar, (numpy.ndarray, numpy.matrixlib.matrix, numpy.matrix)):
-                                if not ar.dtype.kind == 'f':
-                                    ar = ar.asype(numpy.float)
-                                return ( self.fr(ar[0]), self.fg(ar[1]), self.fb(ar[2]), )
-                            
-                            elif isinstance(ar, (types.ListType, types.TupleType)):
-                                return ( self.fr(ar[0]), self.fg(ar[1]), self.fb(ar[2]), )
-                        
-                        elif len(ar) == 1:
-                            return ( self.fr(ar), self.fg(ar), self.fb(ar), )
-                        
-                        elif len(kwargs) == 2:
-                            # confusatron
-                            kwargs.update({ '?' : 0.0 })
-                            return self(**kwargs.copy())
-                        
-                        elif len(kwargs) == 3:
-                            # COMPAND.
-                            out = self(arg=kwargs.copy())
-                            if self.as_hex:
-                                self.as_hex = False
-                                return "#%02X%02X%02X" % tuple(out)
-                            else:
-                                return out
-                        
-                        # and beyond
-                        else:
-                            
-                            return 'YO DOGG'
-                            
-                
+            def __call__(self, r=0.0, g=0.0, b=0.0):
+                return (
+                    self.fr(r),
+                    self.fg(g),
+                    self.fb(b),
+                )
         return RGBTristimulusCompander()
