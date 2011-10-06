@@ -63,12 +63,3 @@ refresh_exif_data = AsyncSignal(providing_args={
     'instance':             mappings.ModelInstanceMap,
 })
 
-
-save_related_histogram = AsyncSignal(providing_args={
-    'instance':             mappings.ModelInstanceMap,
-})
-
-refresh_histogram_channel = AsyncSignal(providing_args={
-    'instance':             mappings.ModelInstanceMap, 
-    'channel_name':         mappings.IDMap,
-})
