@@ -1,6 +1,5 @@
 """ Default ImageKit configuration """
 
-from imagekit.specs import ImageSpec
 from imagekit import processors
 
 class ResizeThumbnail(processors.Resize):
