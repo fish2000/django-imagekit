@@ -87,8 +87,8 @@ class SmartCropped(processors.SmartCrop):
     height = 100
 
 class SmarterCropped(processors.SmartCrop):
-    width = 100
-    height = 100
+    width = 200
+    height = 200
 
 class TransformICC(processors.ICCTransform):
     source = ICCProfile(os.path.join(IK_ROOT, "icc/sRGB-IEC61966-2-1.icc"))
@@ -128,6 +128,10 @@ class TestSmartCropped(ImageSpec):
     access_as = 'smartcropped'
     processors = [ResizeToHeight, SmartCropped]
 
+class TestSmarterCropped(ImageSpec):
+    access_as = 'smartercropped'
+    processors = [SmarterCropped]
+
 class TestICCTransform(ImageSpec):
     #pre_cache = True
     access_as = 'icctrans'
@@ -140,8 +144,13 @@ class TestICCProof(ImageSpec):
 
 class TestAtkinsonizer(ImageSpec):
     access_as = 'atkinsonized'
-    #processors = [SmartCropped, Atkinsonizer]
-    processors = [SmartCropped, processors.Atkinsonify]
+    processors = [SmarterCropped, processors.Atkinsonify]
+    #processors = [processors.Atkinsonify]
+
+class TestAtkinsonizerSlow(ImageSpec):
+    access_as = 'atkinsonized_slow'
+    processors = [SmarterCropped, processors.Atkinsonify_YoDogg]
+    #processors = [processors.Atkinsonify]
 
 class TestNeuQuantizer(ImageSpec):
     access_as = 'neuquantized'
@@ -317,14 +326,19 @@ class IKTest(TestCase):
         self.assertEqual(self.p.smartcropped.height, 100)
     
     def test_atkinsonizer(self):
-        self.assertEqual(self.p.smartcropped.width, self.p.atkinsonized.width)
-        self.assertEqual(self.p.smartcropped.height, self.p.atkinsonized.height)
+        self.assertEqual(self.p.smartercropped.width, self.p.atkinsonized.width)
+        self.assertEqual(self.p.smartercropped.height, self.p.atkinsonized.height)
         self.assertTrue(self.p.atkinsonized.name.lower().endswith('.png'))
+    
+    def test_atkinsonizer_slow(self):
+        self.assertEqual(self.p.smartercropped.width, self.p.atkinsonized_slow.width)
+        self.assertEqual(self.p.smartercropped.height, self.p.atkinsonized_slow.height)
+        self.assertTrue(self.p.atkinsonized_slow.name.lower().endswith('.png'))
     
     def test_neuquantizer(self):
         self.assertTrue(self.p.neuquantized.url is not None)
     
-    def _test_stentifordizer(self):
+    def test_stentifordizer(self):
         self.assertTrue(self.p.stentifordized.url is not None)
     
     def test_trimmer(self):

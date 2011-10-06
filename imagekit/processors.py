@@ -267,6 +267,11 @@ class NeuQuantize(ImageProcessor):
 
 
 class Atkinsonify(Format):
+    format = 'PNG'                      # default; 'BMP' should also work.
+    extension = format.lower()
+    threshold = 128.0
+
+class Atkinsonify_YoDogg(Format):
     """
     Apply the Atkinson dither/halftone algorithm to the image.
     A minimal implementation, adapted from Michael Migurski's
@@ -312,15 +317,21 @@ class Atkinsonify(Format):
         return img, cls.format
 
 
-@memoize
+#@memoize
 def get_stentiford_model(max_checks=None):
     from imagekit.stentiford import StentifordModel
     if max_checks is None:
         max_checks = Stentifordize.max_checks
     return StentifordModel(max_checks=max_checks)
 
+def get_ext_stentiford_model(max_checks=None):
+    from imagekit.ext.processors import StentifordModel
+    if max_checks is None:
+        max_checks = Stentifordize.max_checks
+    return StentifordModel(max_checks=max_checks)
+
 def get_stentiford_image(img):
-    stenty = get_stentiford_model()
+    stenty = get_ext_stentiford_model()
     stenty.ogle(img)
     return stenty.pilimage
 
