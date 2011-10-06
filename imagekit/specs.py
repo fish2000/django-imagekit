@@ -115,7 +115,7 @@ class Accessor(object):
     @property
     def file(self):
         self._create()
-        if self.name:
+        if self._exists():
             return self._obj._storage.open(self.name)
 
     @property
