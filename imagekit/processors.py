@@ -288,9 +288,6 @@ class Atkinsonify(Format):
     """
     format = 'PNG'                      # default; 'BMP' should also work.
     extension = format.lower()
-    
-    #threshold = 128*[0] + 128*[255]     # Adjust threshold by building your own list,
-                                        # full of zeros and/or 255s as per your taste.
     threshold = 128.0
     
     @classmethod
