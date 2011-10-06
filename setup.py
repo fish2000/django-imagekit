@@ -9,13 +9,13 @@ except ImportError:
     from setuptools import setup, find_packages
     from setuptools.command.test import test
 
-
 from Cython.Distutils import build_ext
 import numpy
+import imagekit
 
 setup(
     name='django-imagekit',
-    version='0.3.6',
+    version='%s.%s.%s' % imagekit.__version__,
     description='Automated image processing for Django models.',
     author='Justin Driscoll',
     author_email='justin@driscolldev.com',
@@ -73,7 +73,7 @@ setup(
     
     
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
