@@ -40,13 +40,6 @@ class ICCModelIndex(indexes.SearchIndex, indexes.Indexable):
     colorspace = indexes.CharField()
     pcs = indexes.CharField()
     
-    '''
-    w = indexes.MultiValueField()
-    r = indexes.MultiValueField()
-    g = indexes.MultiValueField()
-    b = indexes.MultiValueField()
-    '''
-    
     profileclass = indexes.CharField()
     technology = indexes.CharField()
     illuminant_measured = indexes.CharField()
@@ -94,36 +87,6 @@ class ICCModelIndex(indexes.SearchIndex, indexes.Indexable):
         if obj.icc:
             return obj.icc.connectionColorSpace
         return ''
-    
-    '''
-    @whatever
-    def prepare_w(self, obj):
-        if obj.icc:
-            if obj.icc.tags.get('wtpt'):
-                return obj.icc.tags.wtpt.values()
-        return []
-    
-    @whatever
-    def prepare_r(self, obj):
-        if obj.icc:
-            if obj.icc.tags.get('rXYZ'):
-                return obj.icc.tags.rXYZ.values()
-        return []
-    
-    @whatever
-    def prepare_g(self, obj):
-        if obj.icc:
-            if obj.icc.tags.get('gXYZ'):
-                return obj.icc.tags.gXYZ.values()
-        return []
-    
-    @whatever
-    def prepare_b(self, obj):
-        if obj.icc:
-            if obj.icc.tags.get('bXYZ'):
-                return obj.icc.tags.bXYZ.values()
-        return []
-    '''
     
     @whatever
     def prepare_profileclass(self, obj):

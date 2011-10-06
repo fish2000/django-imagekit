@@ -20,7 +20,6 @@ from imagekit import signals as iksignals
 from imagekit import specs
 from imagekit.lib import *
 from imagekit.options import Options
-from imagekit.modelfields import VALID_CHANNELS, to_matrix
 from imagekit.ICCProfile import ICCProfile
 from imagekit.utils import logg, hexstr
 from imagekit.utils import itersubclasses
@@ -28,7 +27,6 @@ from imagekit.utils import icchash as icchasher
 from imagekit.utils.memoize import memoize
 from imagekit.modelfields import ICCField, ICCHashField, RGBColorField
 from imagekit.modelfields import ICCDataField, ICCMetaField, EXIFMetaField
-from imagekit.modelfields import HistogramChannelField, Histogram
 from imagekit.modelfields import ImageHashField
 
 # Modify image file buffer size.
@@ -89,7 +87,7 @@ class ImageModelBase(ModelBase):
                 raise ImportError('Unable to load imagekit config module: %s' % opts.spec_module)
             
             for spec in module.__dict__.values():
-                if isinstance(spec, type) and not spec in (specs.ImageSpec, specs.MatrixSpec):
+                if isinstance(spec, type) and not spec == specs.ImageSpec:
                     if issubclass(spec, specs.Spec):
                         opts.specs.update({ spec.name(): spec })
         
@@ -130,33 +128,6 @@ class ImageModel(models.Model):
             if self._imgfield.name:
                 return Image.open(self._storage.open(self._imgfield.name))
         return None
-    
-    @memoize
-    def _cvimage_via_pil(self):
-        if self.pk:
-            if cv is not None:
-                pilimage = self.pilimage
-                if pilimage is not None:
-                    cvim = cv.CreateImageHeader(pilimage.size, cv.IPL_DEPTH_8U, 1)
-                    cv.SetData(cvim, pilimage.tostring())
-                    return cvim
-        return None
-    
-    @memoize
-    def _cvimage_via_storage(self):
-        if self.pk:
-            if cv is not None:
-                if self._imgfield.name:
-                    return cv.LoadImage(self._storage.open(self._imgfield.path))
-        return None
-    
-    @property
-    @memoize
-    def cvimage(self):
-        try:
-            return self._cvimage_via_storage()
-        except NotImplementedError:
-            return self._cvimage_via_pil()
     
     def _dominant(self):
         return self.pilimage.quantize(1).convert('RGB').getpixel((0, 0))
@@ -249,392 +220,6 @@ class ImageModel(models.Model):
         iksignals.clear_cache.send_now(sender=self.__class__, instance=self)
 
 
-class Proof(ImageModel):
-    class Meta:
-         abstract = False
-         verbose_name = "Proof"
-         verbose_name_plural = "Proof Images"
-    
-    class IKOptions:
-        spec_module = None
-        cache_dir = 'cache'
-        proof_dir = 'proofs'
-        image_field = 'image'
-        storage = _storage
-    
-    intent_choices = (
-        (None,                                      "----"),
-        (ImageCms.INTENT_PERCEPTUAL,                "Perceptual"),
-        (ImageCms.INTENT_SATURATION,                "Saturation"),
-        (ImageCms.INTENT_ABSOLUTE_COLORIMETRIC,     "Absolute Colorimetric"),
-        (ImageCms.INTENT_RELATIVE_COLORIMETRIC,     "Relative Colorimetric"),
-    )
-    
-    content_type = models.ForeignKey(ContentType,
-        verbose_name="Source Image Type",
-        limit_choices_to=dict(
-            model__in=(cls.__name__.lower() for cls in itersubclasses(ImageModel))),
-        blank=True,
-        null=True) # GFK defaults
-    
-    object_id = models.PositiveIntegerField(verbose_name="Source Image ID",
-        db_index=True,
-        blank=True,
-        null=True) # GFK defaults
-    
-    sourceimage = generic.GenericForeignKey(
-        'content_type',
-        'object_id')
-    
-    sourceprofile = models.ForeignKey('imagekit.ICCModel',
-        verbose_name="Source ICC Profile",
-        related_name="proofs_as_source",
-        on_delete=models.SET_NULL,
-        db_index=True,
-        editable=True,
-        blank=True,
-        null=True)
-    
-    proofprofile = models.ForeignKey('imagekit.ICCModel',
-        verbose_name="Proofing ICC Profile",
-        related_name="proofs",
-        on_delete=models.SET_NULL,
-        db_index=True,
-        editable=True,
-        blank=True,
-        null=True)
-    
-    intent = models.PositiveIntegerField(verbose_name="Render Intent",
-        choices=intent_choices,
-        default=ImageCms.INTENT_PERCEPTUAL,
-        editable=True,
-        blank=True,
-        null=True)
-    
-    proofintent = models.PositiveIntegerField(verbose_name="Proof Render Intent",
-        choices=intent_choices,
-        default=ImageCms.INTENT_ABSOLUTE_COLORIMETRIC,
-        editable=True,
-        blank=True,
-        null=True)
-    
-    image = models.ImageField(verbose_name="Image",
-        storage=_storage,
-        null=True,
-        blank=True,
-        upload_to='images/proofs',
-        height_field='h',
-        width_field='w',
-        max_length=255)
-    
-    w = models.PositiveIntegerField(verbose_name="width",
-        editable=False,
-        null=True)
-    
-    h = models.PositiveIntegerField(verbose_name="height",
-        editable=False,
-        null=True)
-    
-    def __init__(self, *args, **kwargs):
-        super(Proof, self).__init__(*args, **kwargs)
-        
-        if self.sourceimage and self.image:
-            sourcecls = self.sourceimage.__class__
-            
-            user_opts = getattr(sourcecls, 'IKOptions', None)
-            opts = self._ik
-            opts.update(user_opts)
-            
-            for spec_name, spec in sourcecls._ik.specs.items():
-                opts.specs.update({ spec_name: spec })
-                
-                if issubclass(spec, specs.ImageSpec):
-                    prop = specs.FileDescriptor(spec)
-                elif issubclass(spec, specs.MatrixSpec):
-                    prop = specs.MatrixDescriptor(spec)
-                
-                opts._props.update({ spec_name: prop })
-                propr = opts._props.get(spec_name).accessor(self, opts.specs[spec_name])
-                setattr(self, spec_name, propr)
-                #self._meta.add_to_class(spec_name, propr)
-            
-            setattr(self, '_ik', opts)
-            #self._meta.add_to_class('_ik', opts)
-    
-    def _get_targetimage(self):
-        return self.image
-    def _set_targetimage(self, newimage):
-        self.image = newimage
-    
-    targetimage = property(_get_targetimage, _set_targetimage)
-    targetprofile = IK_sRGB
-    
-    @property
-    def targetname(self):
-        if self.sourceimage:
-            nn = self.sourceimage._imgfield.name
-            if nn:
-                filepath, basename = os.path.split(str(nn))
-                filename, extension = os.path.splitext(basename)
-                
-                out_filename = "PROOF-" + (self._ik.cache_filename_format % {
-                    'filename': filename,
-                    'specname': "%s-%s" % (
-                        self.proofprofile.icc.getDescription(),
-                        self.targetprofile.getDescription(),
-                    ),
-                    'extension': extension.lstrip('.'),
-                })
-                
-                if callable(self._ik.cache_dir):
-                    return self._ik.cache_dir(self, filepath, out_filename)
-                else:
-                    return os.path.join(self._ik.cache_dir, filepath, out_filename)
-        return ''
-    
-    def generate(self, source=None, reuse_transform=False):
-        
-        if isinstance(source, ImageModel):
-            self.sourceimage = source
-            if hasattr(source, 'iccmodel'):
-                if source.iccmodel is not None:
-                    self.sourceprofile = source.iccmodel
-                else:
-                    # assume it's sRGB
-                    self.sourceprofile = ICCModel.objects.get(icchash__iexact=icchasher(IK_sRGB))
-            self.save()
-        elif isinstance(source, ICCProfile):
-            try:
-                matching_icc = ICCModel.objects.get(icchash__iexact=icchasher(source))
-            except ICCModel.DoesNotExist:
-                # create a new ICCModel
-                new_icc = ICCModel()
-                new_icc_file = ContentFile(source.data)
-                new_icc.iccfile.save(
-                    new_icc._storage.get_valid_name("%s.icc" % source.getDescription()),
-                    File(new_icc_file),
-                )
-                new_icc.save()
-                self.sourceprofile = new_icc
-            else:
-                self.sourceprofile = matching_icc
-            self.save()
-        
-        if not hasattr(self, 'prooftransform') or not reuse_transform:
-            self.prooftransform = ImageCms.ImageCmsTransform(
-                self.sourceprofile.icc.lcmsinstance,
-                self.targetprofile.lcmsinstance, # sRGB
-                self.sourceimage.pilimage.mode,
-                'RGB',
-                self.intent,
-                proof=self.proofprofile.icc.lcmsinstance,
-                proof_intent=self.proofintent,
-                flags=ImageCms.FLAGS.get('SOFTPROOFING'),
-            )
-        
-        if self.prooftransform:
-            target = self.prooftransform.apply(self.sourceimage.pilimage)
-            targetdata = StringIO.StringIO()
-            target.save(targetdata, format=self.sourceimage.pilimage.format)
-            targetdata.seek(0)
-            
-            if self.targetname:
-                self.save_image(
-                    self.targetname,
-                    targetdata,
-                    save=True,
-                    replace=True)
-            
-            else:
-                logg.warning("*** Not saving a perfectly good proofed image due to the lack of a targetname.")
-    
-    def __repr__(self):
-        pk = self.pk or '-nil-'
-        src = self.sourceprofile and self.sourceprofile.icc.getDescription() or '-src-'
-        prf = self.proofprofile and self.proofprofile.icc.getDescription() or '-PRF-'
-        dst = self.targetprofile and self.targetprofile.getDescription() or '-dst-'
-        return "<imagekit.Proof #%s %s>" % (pk, [src,prf,dst])
-
-
-class HistogramBase(models.Model):
-    """
-    Model representing a 1-dimensional image histogram.
-    
-    HistogramBase implements a GenericForeignKey to connect to its parent
-    ImageWithMetadata instance. The assumption is that ImageWithMetadata
-    subclasses use the default PositiveIntegers for their respective
-    id fields -- I'm not a super-huge fan of the willy-nilly use of generic
-    relations but this is a pretty certifiable use-case; performance is more of an
-    issue with the histogram data itself (w/r/t joins and such)
-    so I'm OK with it here. Caveat Implementor.
-    
-    """
-    
-    class Meta:
-        abstract = True
-        verbose_name = "Histogram"
-        verbose_name_plural = "Histograms"
-    
-    content_type = models.ForeignKey(ContentType,
-        blank=True,
-        null=True) # GFK default
-    
-    object_id = models.PositiveIntegerField(verbose_name="Object ID",
-        blank=True,
-        null=True) # GFK default
-    
-    imagewithmetadata = generic.GenericForeignKey(
-        'content_type',
-        'object_id')
-    
-    def __repr__(self):
-        return "<%s #%s>" % (self.__class__.__name__, self.pk)
-    
-    def __getitem__(self, channel):
-        if not channel:
-            raise KeyError("No channel index specified.")
-        
-        if not isinstance(channel, basestring):
-            raise TypeError("Channel index must be one of: %s" % ', '.join(VALID_CHANNELS))
-        
-        if channel not in VALID_CHANNELS:
-            raise IndexError("Channel index must be one of: %s" % ', '.join(VALID_CHANNELS))
-        
-        if not hasattr(self, 'image'):
-            raise NotImplementedError("No 'image' property found on %s." % repr(self))
-        
-        if not self.image:
-            raise ValueError("HistogramBase %s has no valid ImageWithMetadata associated with it." % repr(self))
-        
-        pilimage = self.image.pilimage
-        
-        if not pilimage:
-            raise ValueError("No PIL image defined!")
-        
-        if channel not in self.keys():
-            raise KeyError("%s has no histogram for channel %s." % (repr(self), channel))
-        
-        return getattr(self, channel)
-    
-    @property
-    def image(self):
-        return self.imagewithmetadata
-    
-    def keys(self):
-        out = []
-        for field in self._meta.fields:
-            if isinstance(field, HistogramChannelField):
-                out.append(field.name)
-        return out
-    
-    def values(self):
-        out = []
-        for field in self._meta.fields:
-            if isinstance(field, HistogramChannelField):
-                out.append(self[field.name])
-        return out
-    
-    def items(self):
-        return zip(self.keys(), self.values())
-    
-    # distance:
-    # math.sqrt(reduce(operator.add, map(lambda h,i: h*(i**2), abs(axim.histogram_rgb.all - pxim.histogram_rgb.all), range(256*3))) / float(axim.w) * axim.h)
-    
-    def normalized(self, channel):
-        # ch*255.0/sum(ch)
-        return self[channel].astype(float) / max(self[channel])
-    
-    @property
-    def all(self):
-        out = []
-        for channel in self.keys():
-            for i in xrange(256):
-                out.append(getattr(self, "__%s_%02X" % (channel, i)))
-        return to_matrix(out)
-    
-    @property
-    def entropy(self):
-        """
-        Calculate the entropy of an images' histogram. Used for "smart cropping" in easy-thumbnails;
-        see: https://raw.github.com/SmileyChris/easy-thumbnails/master/easy_thumbnails/utils.py
-        
-        """
-        hist_size = float(sum(self.all))
-        hist = [h / hist_size for h in self.all]
-        return -sum([p * math.log(p, 2) for p in hist if p != 0])
-
-
-"""
-HISTOGRAM IMPLEMENTATIONS.
-
-Histograms are subclasses of the abstract base model HistogramBase that are defined with one or more
-channels, represented with HistogramChannelFields. Histograms are computed from the PIL representation
-of the model object's image data -- the channel flag for each HistogramChannelField in the histogram
-has to be a character found in the 'mode' attribute of the PIL image object (pilimage.mode). If you
-want to compute a histogram from a dimension that isn't necessarily found in your images' mode attribute,
-you can use the pil_reference kwarg as below in LumaHistogram's implementation.
-
-When passed to a HistogramChannelField, the pil_reference kwarg needs to provide either a string
-or a callable that will yield a PIL object from which we should extract histogram data. the default
-is 'pilimage', which can be expressed with a callable like so:
-
-    class MyHistogram(HistogramBase):
-        L = HistogramChannelField(channel="L", pil_reference=lambda instance: getattr(instance, 'pilimage'))
-
-For LumaHistogram, I'm getting the image luminosity data like so:
-
-    class MyHistogram(HistogramBase):
-        L = HistogramChannelField(channel="L", pil_reference=lambda instance: instance.pilimage.convert('L'))
-
-More complex callables can be used as well:
-
-    def histogram_with_multmask(instance):
-        from PIL import Image, ImageChops
-        mask_image = "/home/me/MyShit/maskimage.jpg"
-        return ImageChops.multiply(Image.open(mask_image), instance).convert('L')
-    
-    class MyHistogram(HistogramBase):
-        M = HistogramChannelField(channel="L", pil_reference=histogram_with_multmask)
-
-"""
-
-
-class LumaHistogram(HistogramBase):
-    """
-    Luma histogram implementation. It uses one 8-bit channel, L -- a copy of
-    the related image is converted to 'L' mode, as per "pil_reference" (below)
-    and used when populating LumaHistogram during save and instantiation.
-    
-    """
-    class Meta:
-        abstract = False
-        verbose_name = "Luma Histogram"
-        verbose_name_plural = "Luma Histograms"
-    
-    L = HistogramChannelField(channel='L',
-            verbose_name="Luma",
-            pil_reference=lambda instance: instance.pilimage.convert('L'))
-
-class RGBHistogram(HistogramBase):
-    """
-    RGB histogram implementation. One channel for each of the primaries in RGB.
-    
-    """
-    class Meta:
-        abstract = False
-        verbose_name = "RGB Histogram"
-        verbose_name_plural = "RGB Histograms"
-    
-    R = HistogramChannelField(channel='R', verbose_name="Red")
-    G = HistogramChannelField(channel='G', verbose_name="Green")
-    B = HistogramChannelField(channel='B', verbose_name="Blue")
-
-
-"""
-ImageWithMetadata model.
-
-
-"""
 class ImageWithMetadataQuerySet(models.query.QuerySet):
     
     def __init__(self, *args, **kwargs):
@@ -691,10 +276,6 @@ class ImageWithMetadata(ImageModel):
         verbose_name = "Image Metadata Objects"
     
     objects = ImageWithMetadataManager()
-    
-    # All we got right now is Luma and RGB. Come back tomorrow you want more colorspaces.
-    histogram_luma = Histogram(colorspace="Luma")
-    histogram_rgb = Histogram(colorspace="RGB")
     
     # We can sort by these color values.
     dominantcolor = RGBColorField(verbose_name="Dominant Color",
@@ -933,27 +514,10 @@ else:
     # 'models inspector' sounds like the punchline of a junior-high-era joke
     add_introspection_rules(
         rules = [
-            ((HistogramChannelField,), [], {
-                'add_columns': ('add_columns', {}),
-            }),
-        ], patterns = [
-            '^imagekit\.modelfields\.HistogramChannelField',
-        ]
-    )
-    add_introspection_rules(
-        rules = [
             ((ICCField,), [], {
             }),
         ], patterns = [
             '^imagekit\.modelfields\.ICCField',
         ]
     )
-
-
-
-# Histogram type string map (at the end so we're typesafe)
-# XYZHistogram and LabHistogram implementations TBD
-HISTOGRAMS = { 'luma': LumaHistogram, 'rgb': RGBHistogram, }
-
-
 
