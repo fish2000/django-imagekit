@@ -12,7 +12,6 @@ Copyright (c) 2011 OST, LLC.
 """
 import locale, sys, os, re, struct, base64, math, numpy, types
 from imagekit.utils import hasallcase, ADict, AODict
-from imagekit.utils.memoize import memoize
 from imagekit.utils.encoding import get_encodings
 from imagekit.utils.ordereddict import OrderedDict
 from imagekit.etc import spectralarithmetic
@@ -1424,7 +1423,6 @@ class ICCProfile(object):
     
     lcmsinstance = property(getLittleCMSInstance)
     
-    @memoize
     def getTransformer(self, colorlist=None):
         """
         Return ICCTransformer
@@ -1541,7 +1539,6 @@ class ICCTransformer(ICCProfile):
         
         self.colormatrix = numpy.array(colorlist)
     
-    @memoize
     def getRGBTristimulusXYZMatrix(self):
         tristims = set(['rXYZ', 'gXYZ', 'bXYZ'])
         if tristims.issubset(set(self.tags.keys())):
@@ -1551,7 +1548,6 @@ class ICCTransformer(ICCProfile):
                 self.tags['bXYZ'].values(),
             ]).reshape(3, 3).T
     
-    @memoize
     def getIlluminantXYZMatrix(self):
         tristims = set(['wtpt'])
         if tristims.issubset(set(self.tags.keys())):
@@ -1565,7 +1561,6 @@ class ICCTransformer(ICCProfile):
                 ).values() # D50
             ])
     
-    @memoize
     def getChromaticAdaptationXYZMatrix(self):
         chadmatrix = set(['chad'])
         if chadmatrix.issubset(set(self.tags.keys())):
@@ -1577,7 +1572,6 @@ class ICCTransformer(ICCProfile):
                 1,0,0,0,1,0,0,0,1
             ]).reshape(3, 3) # 3x3 identity matrix
     
-    @memoize
     def getRGBLinearizer(self, channel="r", scale=256.0):
         tagkey = "%sTRC" % channel.lower()[:1]
         
@@ -1608,7 +1602,6 @@ class ICCTransformer(ICCProfile):
         # default to 2.2
         return lambda x: (float(x) / scale) ** 2.2
     
-    @memoize
     def getRGBCompander(self, channel="r", scale=256.0):
         tagkey = "%sTRC" % channel.lower()[:1]
         
@@ -1639,7 +1632,6 @@ class ICCTransformer(ICCProfile):
         # default to 2.2
         return lambda x: (float(x) ** (1.0 / 2.2)) * float(scale)
     
-    @memoize
     def getRGBTristimulusLinearizer(self, scale=256.0):
         other = self
         
@@ -1657,7 +1649,6 @@ class ICCTransformer(ICCProfile):
                 )
         return RGBTristimulusLinearizer()
     
-    @memoize
     def getRGBTristimulusCompander(self, scale=256.0):
         other = self
         
