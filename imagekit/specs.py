@@ -35,6 +35,7 @@ class Spec(object):
             img, fmt = proc.process(img, fmt, obj)
         return img, fmt
 
+
 class ImageSpec(Spec):
     quality = 70
     
@@ -44,15 +45,6 @@ class ImageSpec(Spec):
         img.format = fmt
         return img, fmt
 
-class MatrixSpec(Spec):
-    shape = None
-    dtype = None
-    cache = False # for now
-    
-    @classmethod
-    def process(cls, image, obj):
-        mtx, fmt = super(ImageSpec, cls)._process(image, obj, cls.processors)
-        return mtx, fmt
 
 class AccessorBase(object):
     def __init__(self, obj, spec, **kwargs):
@@ -62,65 +54,6 @@ class AccessorBase(object):
         self.spec = spec
         ImageFile.MAXBLOCK = 1024*1024
 
-class MatrixAccessor(AccessorBase):
-    def __init__(self, obj, spec, **kwargs):
-        super(MatrixAccessor, self).__init__(obj, spec, **kwargs)
-    
-    #@memoize
-    def _get_matrixdata(self):
-        mat = self._img
-        #format = getattr(mat, "format", None) or 'array'
-        if not isinstance(mat, matrixlike):
-            mat = numpy.array(mat)
-        if self.spec.dtype:
-            if not issubclass(mat.dtype, self.spec.dtype):
-                mat = mat.astype(self.spec.dtype)
-        if self.spec.shape:
-            mat = mat.reshape(self.spec.shape)
-        return mat
-    
-    def _create(self):
-        if self._obj._imgfield:
-            if self._exists():
-                return
-            # process the original image file
-            try:
-                fp = self._obj._imgfield.storage.open(self._obj._imgfield.name)
-            except IOError:
-                return
-            
-            fp.seek(0)
-            fp = StringIO(fp.read())
-            self._img, self._fmt = self.spec.process(Image.open(fp), self._obj)
-            # save the output matrix
-            self.data = self._get_matrixdata()
-        
-    def _delete(self):
-        if self._obj._imgfield:
-            if self._exists():
-                del self._data
-    
-    def _exists(self):
-        if self._obj._imgfield:
-            if self.name:
-                return hasattr(self, "_data")
-    
-    @property
-    def name(self):
-        # caching goes here.
-        return self._obj._imgfield.name
-    
-    #@memoize
-    def getdata(self):
-        self._create()
-        if self._exists():
-            return getattr(self, "_data", None)
-    
-    def setdata(self, d):
-        self._data = d
-    
-    data = property(getdata, setdata)
-    
 
 class FileAccessor(AccessorBase):
     def __init__(self, obj, spec, **kwargs):
@@ -262,14 +195,4 @@ class FileDescriptor(DescriptorBase):
     def __get__(self, obj, otype=None):
         outobj, outspec = super(FileDescriptor, self).__get__(obj, otype)
         return self.accessor(outobj, outspec)
-    
-
-class MatrixDescriptor(DescriptorBase):
-    
-    accessor = MatrixAccessor
-    
-    def __get__(self, obj, otype=None):
-        outobj, outspec = super(MatrixDescriptor, self).__get__(obj, otype)
-        return self.accessor(outobj, outspec)
-        
 

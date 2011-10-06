@@ -67,11 +67,7 @@ class Options(object):
     def contribute_to_class(self, cls, name):
         self._props = {}
         for spec_name, spec in self.specs.items():
-            if issubclass(spec, specs.ImageSpec):
-                prop = specs.FileDescriptor(spec)
-            elif issubclass(spec, specs.MatrixSpec):
-                prop = specs.MatrixDescriptor(spec)
-            
+            prop = specs.FileDescriptor(spec)
             self._props[spec_name] = prop
             setattr(cls, spec_name, prop)
             cls.add_to_class(spec_name, prop)

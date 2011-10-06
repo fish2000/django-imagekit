@@ -89,7 +89,7 @@ class ImageModelBase(ModelBase):
                 raise ImportError('Unable to load imagekit config module: %s' % opts.spec_module)
             
             for spec in module.__dict__.values():
-                if isinstance(spec, type) and not spec in (specs.ImageSpec, specs.MatrixSpec):
+                if isinstance(spec, type) and not spec == specs.ImageSpec:
                     if issubclass(spec, specs.Spec):
                         opts.specs.update({ spec.name(): spec })
         
