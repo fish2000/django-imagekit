@@ -131,33 +131,6 @@ class ImageModel(models.Model):
                 return Image.open(self._storage.open(self._imgfield.name))
         return None
     
-    @memoize
-    def _cvimage_via_pil(self):
-        if self.pk:
-            if cv is not None:
-                pilimage = self.pilimage
-                if pilimage is not None:
-                    cvim = cv.CreateImageHeader(pilimage.size, cv.IPL_DEPTH_8U, 1)
-                    cv.SetData(cvim, pilimage.tostring())
-                    return cvim
-        return None
-    
-    @memoize
-    def _cvimage_via_storage(self):
-        if self.pk:
-            if cv is not None:
-                if self._imgfield.name:
-                    return cv.LoadImage(self._storage.open(self._imgfield.path))
-        return None
-    
-    @property
-    @memoize
-    def cvimage(self):
-        try:
-            return self._cvimage_via_storage()
-        except NotImplementedError:
-            return self._cvimage_via_pil()
-    
     def _dominant(self):
         return self.pilimage.quantize(1).convert('RGB').getpixel((0, 0))
     
