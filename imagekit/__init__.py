@@ -12,3 +12,4 @@ __version__ = '0.4.1'
 __build__ = 0x000400
 __author__ = 'Justin Driscoll, Bryan Veloso, Greg Newman, Chris Drackett'
 __license__ = 'BSD'
+__version__ = (0, 3, 6)
