@@ -38,29 +38,41 @@ class ExtInterceptor(type):
         types.FunctionType, types.MethodType, types.UnboundMethodType, types.BufferType)
     
     def __new__(cls, name, bases, attrs):
-        from imagekit.ext import processors
+        try:
+            from imagekit.ext import processors
+        except ImportError:
+            allnames = set()
+        else:
+            allnames = set([base.__name__ for base in bases]).union((name,))
         
         newattrs = {}
+        thisname = name
         
-        if hasattr(processors, name):
-            
-            def process(cls, img, fmt, obj):
-                if hasattr(cls, '__ext__'):
-                    return cls.__ext__.process(img, fmt, obj)
-                return cls._process(img, fmt, obj)
-            
-            non_functions = dict(filter(lambda attr: \
-                type(attr[1]) not in cls.do_not_intercept and \
-                not attr[0].startswith("_") and \
-                not attr[0].startswith("process"),
-                attrs.items()))
-            newattrs['__ext__'] = getattr(processors, name)(**non_functions)
-            newattrs['_process'] = attrs['process']
-            newattrs['process'] = classmethod(process)
+        for name in allnames:
+            if hasattr(processors, name):
+                
+                def process(cls, img, fmt, obj):
+                    if hasattr(cls, '__ext__'):
+                        logg.info("+++ %s processing with %s" % (name, cls.__ext__.__class__))
+                        return cls.__ext__.process(img, fmt, obj)
+                    return cls._process(img, fmt, obj)
+                
+                non_functions = dict(filter(lambda attr: \
+                    type(attr[1]) not in cls.do_not_intercept and \
+                    not attr[0].startswith("_") and \
+                    not attr[0].startswith("process"),
+                    attrs.items()))
+                newattrs['__ext__'] = getattr(processors, name)(**non_functions)
+                newattrs['process'] = classmethod(process)
+                if 'process' in attrs:
+                    newattrs['_process'] = attrs['process']
+                
+                print "--- ExtInterceptor updating %s with %s new attributes from %s" % (thisname, len(newattrs), name)
+                break
         
-        print "--- ExtInterceptor updating %s with %s new attributes" % (name, len(newattrs))
+        
         attrs.update(newattrs)
-        return super(ExtInterceptor, cls).__new__(cls, name, bases, attrs)
+        return super(ExtInterceptor, cls).__new__(cls, thisname, bases, attrs)
 
 class ImageProcessor(object):
     """
