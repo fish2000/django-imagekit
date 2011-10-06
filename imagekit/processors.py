@@ -25,18 +25,50 @@ Here's the latest list of supported PIL image modes:
     http://www.pythonware.com/library/pil/handbook/index.htm
 
 """
-import numpy
+import numpy, types
 from imagekit.lib import *
 from imagekit.neuquant import NeuQuant
 #from imagekit.stentiford import StentifordModel
 from imagekit.utils import logg, entropy
 from imagekit.utils.memoize import memoize
 
+class ExtInterceptor(type):
+    
+    do_not_intercept = (
+        types.FunctionType, types.MethodType, types.UnboundMethodType, types.BufferType)
+    
+    def __new__(cls, name, bases, attrs):
+        from imagekit.ext import processors
+        
+        newattrs = {}
+        
+        if hasattr(processors, name):
+            
+            def process(cls, img, fmt, obj):
+                if hasattr(cls, '__ext__'):
+                    return cls.__ext__.process(img, fmt, obj)
+                return cls._process(img, fmt, obj)
+            
+            non_functions = dict(filter(lambda attr: \
+                type(attr[1]) not in cls.do_not_intercept and \
+                not attr[0].startswith("_") and \
+                not attr[0].startswith("process"),
+                attrs.items()))
+            newattrs['__ext__'] = getattr(processors, name)(**non_functions)
+            newattrs['_process'] = attrs['process']
+            newattrs['process'] = classmethod(process)
+        
+        print "--- ExtInterceptor updating %s with %s new attributes" % (name, len(newattrs))
+        attrs.update(newattrs)
+        return super(ExtInterceptor, cls).__new__(cls, name, bases, attrs)
+
 class ImageProcessor(object):
     """
     Base image processor class.
     
     """
+    __metaclass__ = ExtInterceptor
+    
     @classmethod
     def process(cls, img, fmt, obj):
         return img, fmt
@@ -245,18 +277,20 @@ class Atkinsonify(Format):
     format = 'PNG'                      # default; 'BMP' should also work.
     extension = format.lower()
     
-    threshold = 128*[0] + 128*[255]     # Adjust threshold by building your own list,
+    #threshold = 128*[0] + 128*[255]     # Adjust threshold by building your own list,
                                         # full of zeros and/or 255s as per your taste.
+    threshold = 128.0
     
     @classmethod
     def process(cls, img, fmt, obj):
         img = img.convert('L')
+        threshold_matrix = int(cls.threshold)*[0] + int(cls.threshold)*[255]
         
         for y in range(img.size[1]):
             for x in range(img.size[0]):
                 
                 old = img.getpixel((x, y))
-                new = cls.threshold[old]
+                new = threshold_matrix[old]
                 err = (old - new) >> 3 # divide by 8.
                 img.putpixel((x, y), new)
                 
