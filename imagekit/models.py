@@ -1,6 +1,7 @@
 import os, urlparse, numpy
 from datetime import datetime
 from django.conf import settings
+from django.core.files import File
 from django.core.files.base import ContentFile
 from django.db import models
 from django.db.models.base import ModelBase
@@ -95,7 +96,6 @@ class ImageModel(models.Model):
     
     @property
     def _storage(self):
-        #return getattr(self._ik, 'storage', self._imgfield.storage)
         return getattr(self._ik, 'storage')
     
     def _clear_cache(self):
@@ -111,18 +111,7 @@ class ImageModel(models.Model):
     
     @property
     def pilimage(self):
-        if self._imgfield:
-            try:
-                filename = self._imgfield.path
-            except ValueError:
-                return ''
-            else:
-                try:
-                    pilim = Image.open(filename)
-                except IOError:
-                    return ''
-                return pilim
-        return ''
+        return Image.open(self._storage.open(self._imgfield.name))
     
     def _get_histogram(self):
         out = []
@@ -250,11 +239,11 @@ class ICCImageModel(ImageModel):
     
     @property
     def _iccfilename(self):
-        return "%s.icc" % os.path.basename(self._imgfield.path)
+        return "%s.icc" % os.path.basename(str(self._imgfield.name))
     
     @property
     def _iccurl(self):
-        return urlparse.urljoin(self._storage.base_url, os.path.join(self._iccdir, self._iccfilename))
+        return self._storage.url(self._get_iccfilepath())
     
     def _iccfield_get(self):
         return getattr(self, self._ik.icc_field)
@@ -266,52 +255,36 @@ class ICCImageModel(ImageModel):
         """
         FIXME: this will blindly overwrite anything
         """
-        if not self._iccdir:
-            return ""
-        try: 
-            if not self._imgfield.path:
-                return ""
-        except ValueError:
-            #print "WTF: no imagefield path in %s" % self._imgfield
-            return ""
-        return os.path.join(self._storage.location, self._iccdir, self._iccfilename)
+        return self._iccdir + "/" + self._iccfilename
     
     @property
     def icc(self):
-        return ICCProfile(self.pilimage.info.get('icc_profile'))
+        try:
+            profile_string = self.pilimage.info.get('icc_profile', '')
+        except:
+            return None
+        if len(profile_string):
+            return ICCProfile(profile_string)
+        return None
     
     def _save_iccprofile(self, svpth=None):
-        savepath = self._get_iccfilepath()
-        if not savepath:
-            #print "No savepath"
-            return None
-        if os.path.exists(savepath): # FIXME: will need to do some FileSystemStorage nonsense and not fail quietly
-            #print "Savepath exists"
-            return None
-        if self.pilimage:
-            iccstrout = self.pilimage.info.get('icc_profile')
-            if not iccstrout:
-                #rint "No ICC data from pilimage"
-                return None
-            iccfile = self._storage.open(savepath, mode="wb")
-            iccfile.write(iccstrout)
-            iccfile.flush()
-            iccfile.close()
-            return iccfile.name
-        else:
-            #print "No pilimage"
-            return None
+        pass
     
     def save(self, clear_cache=True, *args, **kwargs):
-        if hasattr(self._ik, 'icc_field'):
-            self._iccfield = self.icc
+        theicc = self.icc
+        if theicc and hasattr(theicc, 'data'):
+            if theicc.data:
+                if isinstance(self.icc, ICCProfile):
+                    self._iccfield = self.icc
+                    ff = self._storage.open(self._get_iccfilepath(), 'wb')
+                    self.icc.write(ff)
+                    ff.close()
         super(ICCImageModel, self).save(clear_cache, *args, **kwargs)
     
     def _clear_iccprofile(self):
         clearpth = self._get_iccfilepath()
         if clearpth:
-            if os.path.exists(clearpth):
-                self._storage.delete(clearpth)
+            self._storage.delete(clearpth)
     
     # icc profile properties
     @property
