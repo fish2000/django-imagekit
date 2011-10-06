@@ -4,7 +4,6 @@
 *.db
 *.orig
 *.so
-*.c
 
 .DS_Store
 
