@@ -5,6 +5,7 @@ inheriting from ImageModel will be modified with a descriptor/accessor for each
 spec found.
 
 """
+
 import os, warnings
 from StringIO import StringIO
 from imagekit import processors
@@ -12,17 +13,16 @@ from imagekit.lib import *
 from imagekit.utils import img_to_fobj
 from django.core.files.base import ContentFile
 
-
 class ImageSpec(object):
     pre_cache = False
     quality = 70
     increment_count = False
     processors = []
-
+    
     @classmethod
     def name(cls):
         return getattr(cls, 'access_as', cls.__name__.lower())
-
+    
     @classmethod
     def process(cls, image, obj):
         fmt = image.format
@@ -31,7 +31,6 @@ class ImageSpec(object):
             img, fmt = proc.process(img, fmt, obj)
         img.format = fmt
         return img, fmt
-
 
 class Accessor(object):
     def __init__(self, obj, spec):
@@ -58,19 +57,21 @@ class Accessor(object):
         return imgfile
     
     def _create(self):
-        if self._exists():
-            return
-        # process the original image file
-        try:
-            fp = self._obj._imgfield.storage.open(self._obj._imgfield.name)
-        except IOError:
-            return
-        fp.seek(0)
-        fp = StringIO(fp.read())
-        self._img, self._fmt = self.spec.process(Image.open(fp), self._obj)
-        # save the new image to the cache
-        content = ContentFile(self._get_imgfile().read())
-        self._obj._storage.save(self.name, content)
+        if self._obj._imgfield:
+            if self._exists():
+                return
+            # process the original image file
+            try:
+                fp = self._obj._imgfield.storage.open(self._obj._imgfield.name)
+            except IOError:
+                return
+            
+            fp.seek(0)
+            fp = StringIO(fp.read())
+            self._img, self._fmt = self.spec.process(Image.open(fp), self._obj)
+            # save the new image to the cache
+            content = ContentFile(self._get_imgfile().read())
+            self._obj._storage.save(self.name, content)
     
     def _delete(self):
         if self.name:
@@ -84,32 +85,38 @@ class Accessor(object):
     
     @property
     def name(self):
-        if self._obj._imgfield.name:
-            filepath, basename = os.path.split(self._obj._imgfield.name)
+        nn = self._obj._imgfield.name
+        if nn:
+            filepath, basename = os.path.split(str(nn))
             filename, extension = os.path.splitext(basename)
+            
             for processor in self.spec.processors:
                 if issubclass(processor, processors.Format):
                     extension = processor.extension
+            
             cache_filename = self._obj._ik.cache_filename_format % {
                 'filename': filename,
                 'specname': self.spec.name(),
-                'extension': extension.lstrip('.')
+                'extension': extension.lstrip('.'),
             }
+            
             if callable(self._obj._ik.cache_dir):
                 return self._obj._ik.cache_dir(self._obj, filepath, cache_filename)
             else:
                 return os.path.join(self._obj._ik.cache_dir, filepath, cache_filename)
-        return ""
     
     @property
     def url(self):
-        self._create()
+        if not self.spec.pre_cache:
+            self._create()
+        '''
         if self.spec.increment_count:
             fieldname = self._obj._ik.save_count_as
             if fieldname is not None:
                 current_count = getattr(self._obj, fieldname)
                 setattr(self._obj, fieldname, current_count + 1)
                 self._obj.save(clear_cache=False)
+        '''
         return self._obj._storage.url(self.name)
     
     @property
@@ -117,7 +124,7 @@ class Accessor(object):
         self._create()
         if self._exists():
             return self._obj._storage.open(self.name)
-
+    
     @property
     def image(self):
         if self._img is None:
@@ -134,10 +141,10 @@ class Accessor(object):
     def height(self):
         return self.image.size[1]
 
-
 class Descriptor(object):
     def __init__(self, spec):
         self._spec = spec
     
     def __get__(self, obj, type=None):
         return Accessor(obj, self._spec)
+
