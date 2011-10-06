@@ -1,4 +1,4 @@
-import os, urlparse
+import os, urlparse, numpy
 from datetime import datetime
 from django.conf import settings
 from django.core.files.base import ContentFile
@@ -6,6 +6,7 @@ from django.db import models
 from django.db.models.base import ModelBase
 from django.utils.html import conditional_escape as escape
 from django.utils.translation import ugettext_lazy as _
+
 from imagekit import specs
 from imagekit.lib import *
 from imagekit.options import Options
@@ -66,7 +67,7 @@ class ImageModel(models.Model):
     storage locations and other options.
     """
     __metaclass__ = ImageModelBase
-
+    
     class Meta:
         abstract = True
     
@@ -91,7 +92,6 @@ class ImageModel(models.Model):
     def _imgfield(self):
         return getattr(self, self._ik.image_field)
     
-    # I added this. -fish
     @property
     def _storage(self):
         return getattr(self._ik, 'storage', self._imgfield.storage)
@@ -106,6 +106,71 @@ class ImageModel(models.Model):
             if spec.pre_cache:
                 prop = getattr(self, spec.name())
                 prop._create()
+    
+    @property
+    def pilimage(self):
+        try:
+            if self.image.file.name:
+                filename = self.image.file.name
+        except ValueError:
+            return None
+        else:
+            return Image.open(filename)
+    
+    def _get_histogram(self):
+        out = []
+        if self.pilimage:
+            tensor = numpy.array(self.pilimage.convert('L').histogram())
+            histo,buckets = numpy.histogram(tensor, bins=255)
+            return zip(xrange(len(histo)), histo.flatten().astype(int).tolist())
+    histogram = property(_get_histogram)
+    
+    def _get_rgb_histogram(self):
+        return ('r','g','b') # TOOOO DOOOO
+    
+    def dominantcolor(self):
+        return self.pilimage.quantize(1).convert('RGB').getpixel((0, 0))
+    def meancolor(self):
+        return ImageStat.Stat(self.pilimage).mean
+    def averagecolor(self):
+        return self.pilimage.resize((1, 1), Image.ANTIALIAS).getpixel((0, 0))
+    
+    def mediancolor(self):
+        return reduce((lambda x,y: x[0] > y[0] and x or y), self.pilimage.getcolors(self.pilimage.size[0] * self.pilimage.size[1]))
+    
+    def topcolors(self, numcolors=3):
+        if self.pilimage:
+            colors = self.pilimage.getcolors(self.pilimage.size[0] * self.pilimage.size[1])
+            fmax = lambda x,y: x[0] > y[0] and x or y
+            out = []
+            out.append(reduce(fmax, colors))
+            for i in range(1, numcolors):
+                out.append(reduce(fmax, filter(lambda x: x not in out, colors)))
+            return out
+        return []
+    
+    def topsat(self, samplesize=10):
+        try:
+            return "#" + "".join(map(lambda x: "%02X" % int(x*255),
+                map(lambda x: hls_to_rgb(x[0], x[1], x[2]), [
+                    reduce(lambda x,y: x[2] > y[2] and x or y,
+                        map(lambda x: rgb_to_hls(float(x[1][0])/255, float(x[1][1])/255, float(x[1][2])/255), self.topcolors(samplesize)))
+                ])[0]
+            ))
+        except TypeError:
+            return ""
+    
+    def dominanthex(self):
+        return "#%02X%02X%02X" % self.dominantcolor()
+    def meanhex(self):
+        m = self.meancolor()
+        return "#%02X%02X%02X" % (int(m[0]), int(m[1]), int(m[2]))
+    def averagehex(self):
+        return "#%02X%02X%02X" % self.averagecolor()
+    def medianhex(self):
+        return "#%02X%02X%02X" % self.mediancolor()[1]
+    def tophex(self, numcolors=3):
+        return [("#%02X%02X%02X" % tc[1]) for tc in self.topcolors(numcolors)]
     
     def save_image(self, name, image, save=True, replace=True):
         if self._imgfield and replace:
@@ -194,25 +259,10 @@ class ICCImageModel(ImageModel):
             return ""
         return os.path.join(self._storage.location, self._iccdir, self._iccfilename)
     
-    def _get_pil(self):
-        pilout = None
-        try:
-            if getattr(self._imgfield, "name", None):
-                pilout = Image.open(os.path.join(
-                    self._storage.location,
-                    getattr(self._imgfield, "name")
-                ))
-        except ValueError:
-            pass
-        except IOError:
-            pass
-        return pilout
-    
     def _get_iccstr(self):
-        pilimg = self._get_pil()
-        if not pilimg:
+        if not self.pilimage:
             return None
-        return pilimg.info.get('icc_profile', None)
+        return self.pilimage.info.get('icc_profile', None)
     
     def _get_icc(self):
         iccstr = self._get_iccstr()
