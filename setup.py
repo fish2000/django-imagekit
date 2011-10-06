@@ -26,7 +26,7 @@ setup(
         'imagekit.etc',
         'imagekit.ext',
         'imagekit.management',
-        'imagekit.management.commands'
+        'imagekit.management.commands',
         'imagekit.templatetags',
         'imagekit.utils',
     ],
