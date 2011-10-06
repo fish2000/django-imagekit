@@ -28,20 +28,11 @@ except ImportError:
     except ImportError:
         raise ImportError('ImageKit was unable to import the Python Imaging Library. Please confirm it`s installed and available on your current Python path.')
 
-
-# Attempt to load OpenCV (optional)
-try:
-    import cv, cv2
-except ImportError:
-    cv = None
-    cv2 = None
-
 """
 it ain't where you from,
 it's where you at.
 """
 import os
-#IK_ROOT = os.path.dirname(os.path.realpath(__file__))
 IK_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 from imagekit.ICCProfile import ICCProfile
