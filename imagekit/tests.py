@@ -12,21 +12,20 @@ Copyright (c) 2011 Objects In Space And Time, LLC. All rights reserved.
 
 import os, tempfile, shutil, logging
 from django.conf import settings
+import imagekit.schmettings
+imagekit.schmettings.__dict__.update({
+    'NOSE_ARGS': ['--rednose', '--nocapture', '--nologcapture'],
+    'SQ_ASYNC': True,
+})
+
+if not settings.configured:
+    settings.configure(**imagekit.schmettings.__dict__)
+    import logging.config
+    logging.config.dictConfig(settings.LOGGING)
+
 rp = None
 
 if __name__ == '__main__':
-    import imagekit.schmettings
-    from django.conf import settings
-    
-    imagekit.schmettings.__dict__.update({
-        'NOSE_ARGS': ['--rednose',],
-        'SQ_ASYNC': True,
-    })
-    
-    if not settings.configured:
-        settings.configure(**imagekit.schmettings.__dict__)
-        import logging.config
-        logging.config.dictConfig(settings.LOGGING)
     
     if settings.SQ_ASYNC:
         import subprocess, os, signalqueue
@@ -141,7 +140,8 @@ class TestICCProof(ImageSpec):
 
 class TestAtkinsonizer(ImageSpec):
     access_as = 'atkinsonized'
-    processors = [SmartCropped, Atkinsonizer]
+    #processors = [SmartCropped, Atkinsonizer]
+    processors = [SmartCropped, processors.Atkinsonify]
 
 class TestNeuQuantizer(ImageSpec):
     access_as = 'neuquantized'
