@@ -115,8 +115,9 @@ class Accessor(object):
     @property
     def file(self):
         self._create()
-        return self._obj._storage.open(self.name)
-    
+        if self.name:
+            return self._obj._storage.open(self.name)
+
     @property
     def image(self):
         if self._img is None:
