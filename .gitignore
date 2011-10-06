@@ -14,7 +14,8 @@
 *.bbprojectd/
 *~
 
-dist
-build
+dist/
+build/
+django_imagekit.egg-info/
 MANIFEST
 
