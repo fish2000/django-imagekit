@@ -1,0 +1,246 @@
+[2289] 04 Oct 12:54:16 * Server started, Redis version 2.2.14
+[2289] 04 Oct 12:54:16 * DB loaded from disk: 0 seconds
+[2289] 04 Oct 12:54:16 * The server is now ready to accept connections on port 4332
+[2289] 04 Oct 12:54:16 - DB 0: 1 keys (0 volatile) in 4 slots HT.
+[2289] 04 Oct 12:54:16 - 0 clients connected (0 slaves), 924544 bytes in use
+nosetests --verbosity 2 signalqueue.tests --rednose --nocapture --nologcapture -v --logging-format="%(asctime)s %(levelname)-8s %(name)s:%(lineno)03d:%(funcName)s %(message)s"
+nose.config: INFO: Ignoring files matching ['^\\.', '^_', '^setup\\.py$']
+2011-10-04 12:54:17,591 [INFO] signalqueue: *** Initializing a ConnectionHandler with 3 queues running in mode 4
+[2289] 04 Oct 12:54:17 - Accepted 127.0.0.1:49443
+Creating test database for alias 'default' ('/var/folders/5h/k46wfdmx35s3dx5rb83490540000gn/T/tmpJpVelA/signalqueue-test.db')...
+Destroying old test database 'default'...
+Creating tables ...
+Creating table auth_permission
+Creating table auth_group_permissions
+Creating table auth_group
+Creating table auth_user_user_permissions
+Creating table auth_user_groups
+Creating table auth_user
+Creating table django_content_type
+Creating table django_session
+Creating table django_site
+Creating table django_admin_log
+Creating table signalqueue_testmodel
+Creating table signalqueue_enqueuedsignal
+Creating table signalqueue_workerexceptionlog
+Installing custom SQL ...
+Installing indexes ...
+No fixtures found.
+test_NOW_sync_function_callback (signalqueue.tests.DatabaseQueuedVersusSyncSignalTests) ... passed
+test_NOW_sync_method_callback (signalqueue.tests.DatabaseQueuedVersusSyncSignalTests) ... passed
+test_function_callback (signalqueue.tests.DatabaseQueuedVersusSyncSignalTests) ... 2011-10-04 12:54:17,780 [INFO] signalqueue: --- send() called, runmode = 4
+2011-10-04 12:54:17,788 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 1}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+passed
+test_method_callback (signalqueue.tests.DatabaseQueuedVersusSyncSignalTests) ... 2011-10-04 12:54:17,792 [INFO] signalqueue: --- send() called, runmode = 4
+2011-10-04 12:54:17,801 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 1}, u'signal': {u'signalqueue.tests': u'test_sync_method_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+passed
+test_dequeue (signalqueue.tests.DequeueFromDatabaseTests) ... 2011-10-04 12:54:17,852 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 1}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:17,865 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 2}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:17,874 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 3}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:17,883 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 4}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:17,898 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 5}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:17,911 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 6}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:17,921 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 7}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:17,931 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 8}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:17,941 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 9}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:17,950 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 10}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:17,959 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 11}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:17,968 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 12}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:17,976 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 13}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:17,985 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 14}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:17,994 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 15}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:18,002 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 16}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+passed
++++ django-signalqueue by Alexander Bohn -- http://objectsinspaceandtime.com/
+
+[2289] 04 Oct 12:54:18 - Accepted 127.0.0.1:49444
+[2289] 04 Oct 12:54:18 - Accepted 127.0.0.1:49445
+test_dequeue_management_command (signalqueue.tests.DequeueManagementCommandTests) ... 2011-10-04 12:54:18,048 [INFO] signalqueue: *** Initializing a ConnectionHandler with 3 queues running in mode 2
+
+>>> Flushing signal queue 'db' -- 16 enqueued signals total
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:18,066 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 1}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:18,074 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 2}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:18,084 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 3}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:18,094 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 4}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:18,106 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 5}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:18,115 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 6}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:18,126 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 7}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:18,137 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 8}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:18,147 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 9}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:18,156 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 10}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:18,165 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 11}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:18,174 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 12}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:18,183 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 13}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:18,193 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 14}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:18,206 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 15}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:18,214 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 16}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Done flushing signal queue 'db' -- 0 enqueued signals remaining
+
+
+[2289] 04 Oct 12:54:18 - Client closed connection
+[2289] 04 Oct 12:54:18 - Client closed connection
+passed
+[2289] 04 Oct 12:54:18 - Accepted 127.0.0.1:49446
+test_admin_queue_status_widget_contains_queue_names (signalqueue.tests.DjangoAdminQueueWidgetTests) ... passed
+test_admin_widget_sidebar_uses_queue_module_template (signalqueue.tests.DjangoAdminQueueWidgetTests) ... passed
+test_get_admin_root_page (signalqueue.tests.DjangoAdminQueueWidgetTests) ... passed
+test_testuser_admin_login (signalqueue.tests.DjangoAdminQueueWidgetTests) ... passed
+test_testuser_admin_login_via_client (signalqueue.tests.DjangoAdminQueueWidgetTests) ... passed
+test_backend_total_exception_count (signalqueue.tests.ExceptionLogTests) ... passed
+test_exception_log_context_manager (signalqueue.tests.ExceptionLogTests) ... passed
++++ django-signalqueue by Alexander Bohn -- http://objectsinspaceandtime.com/
+
+[2289] 04 Oct 12:54:18 - Accepted 127.0.0.1:49447
+[2289] 04 Oct 12:54:18 - Accepted 127.0.0.1:49448
+test_exception_log_context_manager_dequeue (signalqueue.tests.ExceptionLogTests) ... 2011-10-04 12:54:18,876 [INFO] signalqueue: *** Initializing a ConnectionHandler with 3 queues running in mode 2
+
+>>> Flushing signal queue 'db' -- 16 enqueued signals total
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:18,894 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 1}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:18,985 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 2}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:18,997 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 3}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:19,007 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 4}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:19,018 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 5}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:19,029 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 6}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:19,042 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 7}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:19,053 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 8}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:19,064 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 9}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:19,080 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 10}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:19,092 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 11}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:19,108 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 12}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:19,119 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 13}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:19,135 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 14}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:19,147 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 15}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Processing signal sent by signalqueue.TestModel: signalqueue.tests.test_sync_function_signal
+2011-10-04 12:54:19,159 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 16}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+>>> Done flushing signal queue 'db' -- 0 enqueued signals remaining
+
+
+passed
+[2289] 04 Oct 12:54:19 - Client closed connection
+[2289] 04 Oct 12:54:19 - Client closed connection
+test_exception_log_view_fail_for_regular_user (signalqueue.tests.ExceptionLogViewTests) ... passed
+test_exception_log_view_superuser (signalqueue.tests.ExceptionLogViewTests) ... passed
+test_map_remap (signalqueue.tests.IDMapTests) ... passed
+test_map_remap (signalqueue.tests.ModelInstanceMapTests) ... passed
+test_map_remap (signalqueue.tests.PickleMapTests) ... passed
+*** Testing queue: default
+test_signal_with_pickle_mapped_argument (signalqueue.tests.PickleMapTests) ... 2011-10-04 12:54:19,558 [INFO] signalqueue: --- send() called, runmode = 4
+*** Queue default: 9 values, runmode is 4
+2011-10-04 12:54:19,560 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 1}, u'signal': {u'signalqueue.tests': u'signal_with_object_argument_default'}, u'obj': {u'app_label': u'pickle', u'modl_name': 1, u'obj_id': u'ccopy_reg\n_reconstructor\nq\x01(csignalqueue.tests\nTestObject\nq\x02c__builtin__\nstr\nq\x03U\x07yo doggtRq\x04.'}, u'enqueue_runmode': 4}
+*** Queue default: 9 values, runmode is 4
+2011-10-04 12:54:19,561 [INFO] signalqueue: --- send() called, runmode = 4
+2011-10-04 12:54:19,562 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'imagekit', u'modl_name': u'testimagem', u'obj_id': 1}, u'signal': {u'imagekit.signals': u'save_related_histogram'}, u'sender': {u'modl_name': u'testimagem', u'app_label': u'imagekit'}, u'enqueue_runmode': 4}
+ERROR
+
+        signalqueue.tests:
+                                   AsyncSignal: signal_with_object_argument_db
+                                   AsyncSignal: additional_signal
+                                   AsyncSignal: test_sync_method_signal
+                                   AsyncSignal: test_sync_function_signal
+                                   AsyncSignal: signal_with_object_argument_default
+                                   AsyncSignal: signal_with_object_argument_listqueue
+      signalqueue.signals:
+                                   AsyncSignal: test_signal
+
+test_additional_signals (signalqueue.tests.RegistryTests) ... passed
+test_autodiscover (signalqueue.tests.RegistryTests) ... passed
+test_register_function (signalqueue.tests.RegistryTests) ... passed
+test_worker_application (signalqueue.tests.WorkerTornadoTests) ... 2011-10-04 12:54:19,635 [INFO] signalqueue: *** Initializing a ConnectionHandler with 3 queues running in mode 3
+passed
+test_worker_dequeue_from_tornado_periodic_callback (signalqueue.tests.WorkerTornadoTests) ... 2011-10-04 12:54:19,723 [INFO] signalqueue: *** Initializing a ConnectionHandler with 3 queues running in mode 3
++++ django-signalqueue by Alexander Bohn -- http://objectsinspaceandtime.com/
+
+Validating models...
+0 errors found
+
+Django version 1.4 pre-alpha SVN-16883, using settings None
+Tornado worker for queue "db" binding to http://127.0.0.1:9920/
+Quit the server with CONTROL-C.
+
+2011-10-04 12:54:19,727 [INFO] signalqueue: *** Initializing a ConnectionHandler with 3 queues running in mode 3
+2011-10-04 12:54:19,737 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 1}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:19,856 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 2}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:19,870 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 3}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:19,892 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 4}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:19,906 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 5}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:19,927 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 6}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:19,942 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 7}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:19,957 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 8}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:19,969 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 9}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:19,991 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 10}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:20,003 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 11}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:20,018 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 12}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:20,029 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 13}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:20,048 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 14}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:20,060 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 15}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:20,079 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 16}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+2011-10-04 12:54:20,089 [INFO] signalqueue: Dequeueing signal: None
+2011-10-04 12:54:20,172 [INFO] signalqueue: Dequeueing signal: None
+Queue exhausted, exiting...
+Shutting down signal queue worker ...
++++ Exiting ...
+
+passed
+test_worker_status_timeout (signalqueue.tests.WorkerTornadoTests) ... 2011-10-04 12:54:20,229 [INFO] signalqueue: *** Initializing a ConnectionHandler with 3 queues running in mode 3
+2011-10-04 12:54:20,244 [INFO] signalqueue: Dequeueing signal: {u'instance': {u'app_label': u'signalqueue', u'modl_name': u'testmodel', u'obj_id': 1}, u'signal': {u'signalqueue.tests': u'test_sync_function_signal'}, u'sender': {u'modl_name': u'testmodel', u'app_label': u'signalqueue'}, u'enqueue_runmode': 4}
+Sleeping for 0.5 seconds...
+passed
+test_worker_status_url_content (signalqueue.tests.WorkerTornadoTests) ... 2011-10-04 12:54:20,810 [INFO] signalqueue: *** Initializing a ConnectionHandler with 3 queues running in mode 3
+passed
+test_worker_status_url_with_queue_parameter_content (signalqueue.tests.WorkerTornadoTests) ... 2011-10-04 12:54:20,872 [INFO] signalqueue: *** Initializing a ConnectionHandler with 3 queues running in mode 3
+2011-10-04 12:54:20,876 [INFO] signalqueue: *** Initializing a ConnectionHandler with 3 queues running in mode 3
+[2289] 04 Oct 12:54:20 - Accepted 127.0.0.1:49454
+2011-10-04 12:54:20,906 [INFO] signalqueue: *** Initializing a ConnectionHandler with 3 queues running in mode 3
+[2289] 04 Oct 12:54:20 - Accepted 127.0.0.1:49457
+passed
+
+-----------------------------------------------------------------------------
+Destroying test database for alias 'default' ('/var/folders/5h/k46wfdmx35s3dx5rb83490540000gn/T/tmpJpVelA/signalqueue-test.db')...
+1) ERROR: test_signal_with_pickle_mapped_argument (signalqueue.tests.PickleMapTests)
+
+   Traceback (most recent call last):
+    tests.py line 326 in test_signal_with_pickle_mapped_argument
+      sigstruct_dequeue, result_list = queue.dequeue()
+    worker/base.py line 207 in dequeue
+      regkey, ' ,'.join(signalqueue.SQ_DMV.keys())))
+   SignalRegistryError: No registered signals in 'imagekit.signals' (registry contains 'signalqueue.tests ,signalqueue.signals').
+
+
+-----------------------------------------------------------------------------
+28 tests run in 3.5 seconds. 
+1 error (27 tests passed)
+[2289] 04 Oct 12:54:20 - Client closed connection
+[2289] 04 Oct 12:54:20 - Client closed connection
+[2289] 04 Oct 12:54:20 - Client closed connection
+[2289] 04 Oct 12:54:20 - Client closed connection
