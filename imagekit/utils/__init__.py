@@ -133,25 +133,6 @@ hexstr = lambda triple: "#%02X%02X%02X" % tuple(triple)
 icchash = lambda icc: hashlib.sha1(icc.data).hexdigest()
 
 
-# color dicts for admin and templates.
-class SeriesColors(ADict):
-    def __init__(self):
-        self.R = "#FF1919"
-        self.G = "#19FA19"
-        self.B = "#1991FF"
-        self.L = "#CCCCCC"
-
-class SeriesColorsAlpha(ADict):
-    def __init__(self):
-        self.R = "rgba(165, 5, 15, 0.65)"
-        self.G = "rgba(10, 175, 85, 0.75)"
-        self.B = "rgba(12, 13, 180, 0.15)"
-        self.L = "rgba(221, 221, 221, 0.45)"
-
-oldcolors = SeriesColors()
-seriescolors = SeriesColorsAlpha()
-
-
 """
 Some lambda-logic:
 

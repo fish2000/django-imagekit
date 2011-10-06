@@ -286,6 +286,9 @@ class ImageWithMetadata(ImageModel):
         verbose_name = "Image Metadata"
         verbose_name = "Image Metadata Objects"
     
+    class IKOptions:
+        pass
+    
     objects = ImageWithMetadataManager()
     
     # We can sort by these color values.
