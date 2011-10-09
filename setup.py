@@ -75,11 +75,13 @@ setup(
     
     ext_modules=[
         Extension("imagekit.ext.processors", ["imagekit/ext/processors.pyx"]),
+        Extension("imagekit.ext.ccms", ["imagekit/ext/ccms.pyx"]),
     ],
     cmdclass=dict(
         build_ext=build_ext,
     ),
     include_dirs=[
+        '/usr/local/xcode/Library/Frameworks/LittleCMS.Framework/Headers',
         numpy.get_include(),
         ".",
     ],
