@@ -29,10 +29,10 @@ pre_cache = AsyncSignal(providing_args={
     'instance':             mappings.ModelInstanceMap,
 })
 
-
 clear_cache = AsyncSignal(providing_args={
     'instance':             mappings.ModelInstanceMap,
 })
+
 
 prepare_spec = AsyncSignal(providing_args={
     'instance':             mappings.ModelInstanceMap,
