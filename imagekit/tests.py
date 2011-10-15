@@ -338,7 +338,7 @@ class IKTest(TestCase):
     def test_neuquantizer(self):
         self.assertTrue(self.p.neuquantized.url is not None)
     
-    def test_stentifordizer(self):
+    def _test_stentifordizer(self):
         self.assertTrue(self.p.stentifordized.url is not None)
     
     def test_trimmer(self):
