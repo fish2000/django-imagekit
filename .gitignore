@@ -1,6 +1,8 @@
 *.pyc
 *.db
 *.orig
+.*so
+
 .DS_Store
 dist
 build
