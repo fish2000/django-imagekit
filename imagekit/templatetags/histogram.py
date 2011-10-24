@@ -15,7 +15,7 @@ def version():
 @register.inclusion_tag('histogram.uint8.html', takes_context=True)
 def histogram_channel(context, instance=None, histogram_channel='B'):
     
-    logg.info("HISTOGRAM")
+    #logg.info("HISTOGRAM")
     
     if instance is not None:
         

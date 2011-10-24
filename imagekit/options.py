@@ -76,10 +76,17 @@ class Options(object):
             setattr(cls, spec_name, prop)
             cls.add_to_class(spec_name, prop)
         
-        iksignals.pre_cache.connect(self.pre_cache, sender=cls, dispatch_uid="imagekit-options-pre-cache")
-        iksignals.clear_cache.connect(self.clear_cache, sender=cls, dispatch_uid="imagekit-options-clear-cache")
-        iksignals.prepare_spec.connect(self.do_prepare_spec, sender=cls, dispatch_uid="imagekit-options-prepare-spec")
-        iksignals.delete_spec.connect(self.do_delete_spec, sender=cls, dispatch_uid="imagekit-options-delete-spec")
+        iksignals.pre_cache.connect(self.pre_cache, sender=cls,
+            dispatch_uid="imagekit-options-pre-cache")
+        
+        iksignals.clear_cache.connect(self.clear_cache, sender=cls,
+            dispatch_uid="imagekit-options-clear-cache")
+        
+        iksignals.prepare_spec.connect(self.do_prepare_spec, sender=cls,
+            dispatch_uid="imagekit-options-prepare-spec")
+        
+        iksignals.delete_spec.connect(self.do_delete_spec, sender=cls,
+            dispatch_uid="imagekit-options-delete-spec")
     
     def do_delete_spec(self, **kwargs):
         instance = kwargs.get('instance', None)

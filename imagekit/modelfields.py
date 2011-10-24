@@ -1,4 +1,4 @@
-import base64, hashlib, numpy, uuid
+import base64, hashlib, numpy, uuid, signalqueue
 from django.conf import settings
 from django.db import models
 from django.db.models import fields
@@ -8,8 +8,8 @@ from django.utils.translation import ugettext_lazy
 from django.core.files import File
 from django.core.files.storage import FileSystemStorage
 from django.core.exceptions import ObjectDoesNotExist
-#from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
+
 from ICCProfile import ICCProfile
 from imagekit import colors
 from imagekit.utils import logg
@@ -17,7 +17,7 @@ from imagekit.utils import EXIF
 from imagekit.utils.json import json
 from imagekit import signals as iksignals
 from imagekit.widgets import RGBColorFieldWidget
-import imagekit
+
 import imagekit.models
 
 
@@ -169,8 +169,10 @@ class ICCMetaField(ICCDataField):
     
     def contribute_to_class(self, cls, name):
         super(ICCMetaField, self).contribute_to_class(cls, name)
-        signals.pre_save.connect(self.check_icc_field, sender=cls)
-        iksignals.refresh_icc_data.connect(self.refresh_icc_data, sender=cls)
+        signals.pre_save.connect(self.check_icc_field, sender=cls,
+            dispatch_uid='iccmetafield-pre-save')
+        iksignals.refresh_icc_data.connect(self.refresh_icc_data, sender=cls,
+            dispatch_uid='iccmetafield-refresh-icc-data')
     
     def check_icc_field(self, **kwargs): # signal, sender, instance
         if not kwargs.get('raw', False):
@@ -229,7 +231,7 @@ class ICCMetaField(ICCDataField):
                 enqueue_runmode = kwargs.get('enqueue_runmode', None)
                 if dequeue_runmode is not None:
                     if not dequeue_runmode == enqueue_runmode:
-                        if dequeue_runmode == imagekit.IK_ASYNC_DAEMON:
+                        if dequeue_runmode == signalqueue.SQ_RUNMODES['SQ_ASYNC_DAEMON']:
                             instance.save_base()
                 
     
@@ -278,8 +280,10 @@ class EXIFMetaField(models.TextField):
     
     def contribute_to_class(self, cls, name):
         super(EXIFMetaField, self).contribute_to_class(cls, name)
-        signals.post_save.connect(self.check_exif_field, sender=cls)
-        iksignals.refresh_exif_data.connect(self.refresh_exif_data, sender=cls)
+        signals.post_save.connect(self.check_exif_field, sender=cls,
+            dispatch_uid='exifmetafield-post-save')
+        iksignals.refresh_exif_data.connect(self.refresh_exif_data, sender=cls,
+            dispatch_uid='exifmetafield-refresh-exif-data')
     
     def check_exif_field(self, **kwargs): # signal, sender, instance
         if not kwargs.get('raw', False):
@@ -337,7 +341,7 @@ class EXIFMetaField(models.TextField):
             enqueue_runmode = kwargs.get('enqueue_runmode', None)
             if dequeue_runmode is not None:
                 if not dequeue_runmode == enqueue_runmode:
-                    if dequeue_runmode == imagekit.IK_ASYNC_DAEMON:
+                    if dequeue_runmode == signalqueue.SQ_RUNMODES['SQ_ASYNC_DAEMON']:
                         instance.save_base()
     
     def south_field_triple(self):
@@ -495,7 +499,8 @@ class HistogramChannelField(models.CharField):
         super(HistogramChannelField, self).contribute_to_class(cls, name)
         
         setattr(cls, self.original_channel, HistogramChannelDescriptor(self))
-        signals.pre_save.connect(self.refresh_histogram_channel, sender=cls)
+        signals.pre_save.connect(self.refresh_histogram_channel, sender=cls,
+            dispatch_uid='histogramchannelfield-pre-save')
         
         if self.add_columns and not cls._meta.abstract:
             if hasattr(self, 'original_channel'):
@@ -654,8 +659,10 @@ class Histogram(fields.CharField):
         super(Histogram, self).contribute_to_class(cls, name)
         if not cls._meta.abstract:
             setattr(cls, self.name, HistogramDescriptor(self))
-            signals.post_save.connect(self.queue_related_histogram_update, sender=cls, dispatch_uid="queue_related_histogram_update")
-            iksignals.save_related_histogram.connect(self.save_related_histogram, sender=cls)
+            signals.post_save.connect(self.queue_related_histogram_update, sender=cls,
+                dispatch_uid="histogram-post-save")
+            iksignals.save_related_histogram.connect(self.save_related_histogram, sender=cls,
+                dispatch_uid='histogram-save-related-histogram')
             
             histogram = generic.GenericRelation(imagekit.models.HISTOGRAMS.get(self.original_colorspace.lower()))
             histogram.verbose_name = "Related %s Histogram" % self.original_colorspace
@@ -742,8 +749,10 @@ class ImageHashField(fields.CharField):
     
     def contribute_to_class(self, cls, name):
         super(ImageHashField, self).contribute_to_class(cls, name)
-        signals.pre_save.connect(self.check_hash_field, sender=cls)
-        iksignals.refresh_hash.connect(self.refresh_hash, sender=cls)
+        signals.pre_save.connect(self.check_hash_field, sender=cls,
+            dispatch_uid='imagehashfield-pre-save')
+        iksignals.refresh_hash.connect(self.refresh_hash, sender=cls,
+            dispatch_uid='imagehashfield-refresh-hash')
     
     def check_hash_field(self, **kwargs): # signal, sender, instance
         if not kwargs.get('raw', False):
@@ -806,7 +815,7 @@ class ImageHashField(fields.CharField):
             enqueue_runmode = kwargs.get('enqueue_runmode', None)
             if dequeue_runmode is not None:
                 if not dequeue_runmode == enqueue_runmode:
-                    if dequeue_runmode == imagekit.IK_ASYNC_DAEMON:
+                    if dequeue_runmode == signalqueue.SQ_RUNMODES['SQ_ASYNC_DAEMON']:
                         instance.save_base()
     
     def south_field_triple(self):
@@ -908,8 +917,10 @@ class RGBColorField(models.CharField):
     
     def contribute_to_class(self, cls, name):
         super(RGBColorField, self).contribute_to_class(cls, name)
-        signals.pre_save.connect(self.check_rgb_color_field, sender=cls)
-        iksignals.refresh_color.connect(self.refresh_color, sender=cls)
+        signals.pre_save.connect(self.check_rgb_color_field, sender=cls,
+            dispatch_uid='rgbcolorfield-pre-save')
+        iksignals.refresh_color.connect(self.refresh_color, sender=cls,
+            dispatch_uid='rgbcolorfield-refresh-color')
     
     def check_rgb_color_field(self, **kwargs):
         if not kwargs.get('raw', False):
@@ -960,7 +971,7 @@ class RGBColorField(models.CharField):
         enqueue_runmode = kwargs.get('enqueue_runmode', None)
         if dequeue_runmode is not None:
             if not dequeue_runmode == enqueue_runmode:
-                if dequeue_runmode == imagekit.IK_ASYNC_DAEMON:
+                if dequeue_runmode == signalqueue.SQ_RUNMODES['SQ_ASYNC_DAEMON']:
                     instance.save_base()
     
     def south_field_triple(self):

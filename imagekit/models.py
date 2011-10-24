@@ -506,11 +506,6 @@ class HistogramBase(models.Model):
         if not self.image:
             raise ValueError("HistogramBase %s has no valid ImageWithMetadata associated with it." % repr(self))
         
-        pilimage = self.image.pilimage
-        
-        if not pilimage:
-            raise ValueError("No PIL image defined!")
-        
         if channel not in self.keys():
             raise KeyError("%s has no histogram for channel %s." % (repr(self), channel))
         
