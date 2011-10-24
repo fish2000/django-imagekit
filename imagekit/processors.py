@@ -62,8 +62,10 @@ class ExtInterceptor(type):
                     not attr[0].startswith("_") and \
                     not attr[0].startswith("process"),
                     attrs.items()))
+                
                 newattrs['__ext__'] = getattr(processors, name)(**non_functions)
                 newattrs['process'] = classmethod(process)
+                
                 if 'process' in attrs:
                     newattrs['_process'] = attrs['process']
                 
