@@ -67,12 +67,11 @@ class ExtInterceptor(type):
                 if 'process' in attrs:
                     newattrs['_process'] = attrs['process']
                 
-                print "--- ExtInterceptor updating %s with %s new attributes from %s" % (thisname, len(newattrs), name)
                 break
-        
         
         attrs.update(newattrs)
         return super(ExtInterceptor, cls).__new__(cls, thisname, bases, attrs)
+
 
 class ImageProcessor(object):
     """
