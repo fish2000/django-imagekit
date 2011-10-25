@@ -127,11 +127,10 @@ class ImageModel(models.Model):
     @memoize
     def pilimage(self):
         if self.pk:
-            if self._imgfield.name:
-                return Image.open(self._storage.open(self._imgfield.name))
+            if self._imgfield:
+                return Image.open(self._imgfield.file)
         return None
     
-    @memoize
     def _cvimage_via_pil(self):
         if self.pk:
             if cv is not None:
@@ -142,7 +141,6 @@ class ImageModel(models.Model):
                     return cvim
         return None
     
-    @memoize
     def _cvimage_via_storage(self):
         if self.pk:
             if cv is not None:
@@ -151,12 +149,22 @@ class ImageModel(models.Model):
         return None
     
     @property
-    @memoize
-    def cvimage(self):
+    def cvstruct(self):
         try:
             return self._cvimage_via_storage()
         except NotImplementedError:
             return self._cvimage_via_pil()
+    
+    @property
+    @memoize
+    def cvimage(self):
+        try:
+            import SimpleCV
+        except ImportError:
+            return None
+        else:
+            return SimpleCV.Image(self.cvstruct)
+        return None
     
     def _dominant(self):
         return self.pilimage.quantize(1).convert('RGB').getpixel((0, 0))
