@@ -1,7 +1,9 @@
 
 from django.http import HttpResponse, HttpResponseNotFound
 from django.db.models.loading import cache
+from django.views.decorators.cache import never_cache
 
+@never_cache
 def image(request, app_label, modlcls, pk):
     modl = cache.get_model(app_label, modlcls)
     
