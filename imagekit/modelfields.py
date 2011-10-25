@@ -975,11 +975,13 @@ class RGBColorField(models.CharField):
     def to_python(self, value):
         if hasattr(value, 'hex'):
             return value
+        
         if value is not None:
-            if not value.startswith('#'):
-                return colors.Color("#%s" % value)
-            else:
+            if str(value).startswith('#'):
                 return colors.Color("%s" % value)
+            else:
+                return colors.Color("#%s" % value)
+        
         return None
     
     def get_db_prep_value(self, value, connection=None, prepared=None):
