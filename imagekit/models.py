@@ -3,9 +3,11 @@ import cStringIO as StringIO
 from datetime import datetime
 from django.conf import settings
 from django.core.files import File
+from django.core.urlresolvers import reverse
 from django.core.files.base import ContentFile
 from django.core.files.storage import FileSystemStorage
 from django.core.exceptions import ImproperlyConfigured
+
 from django.db import models
 from django.db.models import Q
 from django.db.models.base import ModelBase
@@ -165,6 +167,13 @@ class ImageModel(models.Model):
         else:
             return SimpleCV.Image(self.cvstruct)
         return None
+    
+    @property
+    def view_url(self):
+        content_type = ContentType.objects.get_for_model(self.__class__)
+        return reverse('imagekit:image',
+            kwargs=dict(
+                app_label=content_type.app_label, modlcls=content_type.model, pk=self.pk))
     
     def _dominant(self):
         return self.pilimage.quantize(1).convert('RGB').getpixel((0, 0))

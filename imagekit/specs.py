@@ -12,8 +12,10 @@ from imagekit import processors
 from imagekit.lib import *
 from imagekit import signals
 from imagekit.utils import img_to_fobj, logg
-#from imagekit.utils.memoize import memoize
+
+from django.core.urlresolvers import reverse
 from django.core.files.base import ContentFile
+from django.contrib.contenttypes.models import ContentType
 
 matrixlike = (numpy.matrixlib.matrix, numpy.ndarray)
 
@@ -217,6 +219,14 @@ class FileAccessor(AccessorBase):
                 self._obj.save(clear_cache=False)
         '''
         return self._obj._storage.url(self.name)
+    
+    @property
+    def view_url(self):
+        content_type = ContentType.objects.get_for_model(self._obj.__class__)
+        return reverse('imagekit:image_property',
+            kwargs=dict(
+                prop_name=self.spec.name(),
+                app_label=content_type.app_label, modlcls=content_type.model, pk=self._obj.pk))
     
     @property
     def file(self):
