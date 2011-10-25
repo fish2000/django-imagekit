@@ -108,9 +108,7 @@ class ICCDataField(models.TextField):
     __metaclass__ = models.SubfieldBase
     
     def to_python(self, value):
-        """
-        Always return a valid ICCProfile instance, or None.
-        """
+        """ Always return a valid ICCProfile instance, or None. """
         if value:
             if isinstance(value, ICCProfile):
                 return value
@@ -118,9 +116,7 @@ class ICCDataField(models.TextField):
         return None
     
     def get_prep_value(self, value):
-        """
-        Always return the profile data as a string, or an empty string.
-        """
+        """ Always return the profile data as a string, or an empty string. """
         if value:
             if isinstance(value, ICCProfile):
                 return value.data
@@ -129,9 +125,7 @@ class ICCDataField(models.TextField):
         return value
     
     def get_db_prep_value(self, value, connection=None, prepared=False):
-        """
-        Always return a valid unicode data string.
-        """
+        """ Always return a valid unicode data string. """
         if not prepared:
             value = self.get_prep_value(value)
         if value:
@@ -139,9 +133,7 @@ class ICCDataField(models.TextField):
         return value
     
     def value_to_string(self, obj):
-        """
-        Return unicode data (for now) suitable for serialization (JSON, pickle, etc)
-        """
+        """ Return unicode data (for now) suitable for serialization. """
         return self.get_db_prep_value(self._get_val_from_obj(obj))
     
     def south_field_triple(self):
@@ -157,8 +149,9 @@ class ICCDataField(models.TextField):
 class ICCMetaField(ICCDataField):
     """
     This ICCDataField subclass will automatically refresh itself
-    with ICC data it finds in the image classes' PIL instance. The
-    methods it impelemnts are designed to work with the ImageWithMetadata
+    with ICC data it finds in the image classes' PIL instance.
+    
+    The methods it impelemnts are designed to work with the ImageWithMetadata
     abstract base class to accomplish this feat, using signals.
     
     """
@@ -173,19 +166,25 @@ class ICCMetaField(ICCDataField):
             dispatch_uid='iccmetafield-pre-save')
         iksignals.refresh_icc_data.connect(self.refresh_icc_data, sender=cls,
             dispatch_uid='iccmetafield-refresh-icc-data')
+        iksignals.clear_cache.connect(self.clear_icc_data, sender=cls,
+            dispatch_uid='iccmetafield-clear-cache')
     
     def check_icc_field(self, **kwargs): # signal, sender, instance
         if not kwargs.get('raw', False):
             instance = kwargs.get('instance')
+            sender = kwargs.get('sender')
+            
             if not getattr(instance, self.name, None):
-                iksignals.refresh_icc_data.send(sender=instance.__class__, instance=instance)
+                logg.info("--- Enqueueing async signal 'refresh_icc_data' for %s %s." % (
+                    sender.__name__, getattr(instance, 'pk', "<NONE>")))
+                iksignals.refresh_icc_data.send(sender=sender, instance=instance)
+            
+            else:
+                logg.info("~~~ Not sending 'refresh_icc_data' for %s %s (data has already been stored)." % (
+                    sender.__name__, getattr(instance, 'pk', "<NONE>")))
     
     def refresh_icc_data(self, **kwargs): # signal, sender, instance
-        """
-        Stores ICC profile data in the field before saving, and refreshes
-        the profile hash if an ICCHashField has been specified.
-        
-        """
+        """ Stores ICC profile data and refreshes the profile hash if an ICCHashField was specified. """
         instance = kwargs.get('instance')
         
         try:
@@ -209,22 +208,19 @@ class ICCMetaField(ICCDataField):
         profile_string = ''
         
         if pilimage:
-            try:
-                profile_string = pilimage.info.get('icc_profile', '')
-            except ObjectDoesNotExist:
-                logg.info("Exception was raised when trying to get the icc profile string")
+            profile_string = pilimage.info.get('icc_profile', '')
             
             if len(profile_string):
-                #logg.info("Saving icc profile for %s %s ..." % (instance.__class__.__name__, instance.id))
+                #logg.info("Storing icc profile data for %s %s ..." % (instance.__class__.__name__, instance.id))
                 iccdata = ICCProfile(profile_string)
                 setattr(instance, self.name, ICCProfile(profile_string))
-                logg.info("Saved icc profile '%s' for %s" % (instance.icc.getDescription(), instance.id))
+                logg.info("Storing icc profile data '%s' for %s" % (instance.icc.getDescription(), instance.id))
                 
                 # refresh profile hash
                 if self.hash_field:
                     hsh = hashlib.sha1(iccdata.data).hexdigest()
                     setattr(instance, self.hash_field, hsh)
-                    logg.info("Saved icc profile hash '%s' in ICCHashField %s" % (hsh, self.hash_field))
+                    logg.info("Storing icc profile hash '%s' in ICCHashField %s" % (hsh, self.hash_field))
                 
                 # save if sent asynchronously
                 dequeue_runmode = kwargs.get('dequeue_runmode', None)
@@ -233,13 +229,29 @@ class ICCMetaField(ICCDataField):
                     if not dequeue_runmode == enqueue_runmode:
                         if dequeue_runmode == signalqueue.SQ_RUNMODES['SQ_ASYNC_DAEMON']:
                             instance.save_base()
-                
+    
+    def clear_icc_data(self, **kwargs): # signal, sender, instance
+        """ Clears both the ICC data and the hash (if an ICCHashField was specified). """
+        instance = kwargs.get('instance')
+        
+        logg.info("--- Clearing icc profile data from %s.%s %s" % (
+            instance.__class__.__name__, self.name, instance.id))
+        setattr(instance, self.name, None)
+        
+        if self.hash_field:
+            logg.info("--- Clearing icc profile data from %s.%s %s" % (
+                instance.__class__.__name__, self.hash_field, instance.id))
+            setattr(instance, self.hash_field, None)
+        
+        # save if sent asynchronously
+        dequeue_runmode = kwargs.get('dequeue_runmode', None)
+        enqueue_runmode = kwargs.get('enqueue_runmode', None)
+        if dequeue_runmode is not None:
+            if not dequeue_runmode == enqueue_runmode:
+                if dequeue_runmode == signalqueue.SQ_RUNMODES['SQ_ASYNC_DAEMON']:
+                    instance.save_base()
     
     def south_field_triple(self):
-        """
-        Represent the field properly to the django-south model inspector.
-        See also: http://south.aeracode.org/docs/extendingintrospection.html
-        """
         from south.modelsinspector import introspector
         args, kwargs = introspector(self)
         return ('imagekit.modelfields.ICCMetaField', args, kwargs)
@@ -284,22 +296,33 @@ class EXIFMetaField(models.TextField):
             dispatch_uid='exifmetafield-post-save')
         iksignals.refresh_exif_data.connect(self.refresh_exif_data, sender=cls,
             dispatch_uid='exifmetafield-refresh-exif-data')
+        iksignals.clear_cache.connect(self.clear_exif_data, sender=cls,
+            dispatch_uid='exifmetafield-clear-cache')
     
     def check_exif_field(self, **kwargs): # signal, sender, instance
         if not kwargs.get('raw', False):
             instance = kwargs.get('instance')
+            sender = kwargs.get('sender')
             
             # use the PIL accessor to test whether or not we have any EXIF data
             p = instance.pilimage
             if hasattr(p, "_getexif"):
                 if not getattr(instance, self.name, None):
-                    iksignals.refresh_exif_data.send(sender=instance.__class__, instance=instance)
-
+                    logg.info("--- Enqueueing async signal 'refresh_exif_data' for %s %s." % (
+                        sender.__name__, getattr(instance, 'pk', "<NONE>")))
+                    iksignals.refresh_exif_data.send(sender=sender, instance=instance)
+                
+                else:
+                    logg.info("~~~ Not sending 'refresh_exif_data' for %s %s (metadata has already been stored)." % (
+                        sender.__name__, getattr(instance, 'pk', "<NONE>")))
+    
     def refresh_exif_data(self, **kwargs): # signal, sender, instance
         """
         Stores EXIF profile data in the field before saving.
+        
         Unlike ICC data represented by an ICCProfile instance, the EXIF data
         we get back from EXIF.py is a plain dict [don't we all wish. -ed].
+        
         As a result, this field's refresh method is much simpler than its
         counterpart in ICCMetaField, as we only have to go one-way, as it were.
         
@@ -311,12 +334,12 @@ class EXIFMetaField(models.TextField):
             im = instance.image
             im.seek(0)
             exif_dict = EXIF.process_file(im)
-        except:
+        except Exception, err:
             try:
                 im = instance.image
                 im.seek(0)
                 exif_dict = EXIF.process_file(im, details=False)
-            except:
+            except Exception, err:
                 exif_dict = {}
         
         # delete any JPEGThumbnail data we might have found
@@ -327,10 +350,10 @@ class EXIFMetaField(models.TextField):
         for k, v in exif_dict.items():
             exif_out.update({ k: getattr(v, 'printable') or v, })
         
-        # store it appropruately
+        # store it
         if len(exif_out.keys()) > 0:
             setattr(instance, self.name, exif_out)
-            logg.info("Saved exif data for %s: (%s tags)" % (
+            logg.info("Saved exif metadata for %s: (%s tags)" % (
                 instance.id,
                 #"', '".join(exif_out.keys()),
                 len(exif_out.keys()),
@@ -344,11 +367,23 @@ class EXIFMetaField(models.TextField):
                     if dequeue_runmode == signalqueue.SQ_RUNMODES['SQ_ASYNC_DAEMON']:
                         instance.save_base()
     
+    def clear_exif_data(self, **kwargs): # signal, sender, instance
+        """ Stores EXIF metadata in the field before saving. """
+        instance = kwargs.get('instance')
+        
+        logg.info("--- Clearing exif metadata from %s.%s %s" % (
+            instance.__class__.__name__, self.name, instance.id))
+        setattr(instance, self.name, None)
+        
+        # save if sent asynchronously
+        dequeue_runmode = kwargs.get('dequeue_runmode', None)
+        enqueue_runmode = kwargs.get('enqueue_runmode', None)
+        if dequeue_runmode is not None:
+            if not dequeue_runmode == enqueue_runmode:
+                if dequeue_runmode == signalqueue.SQ_RUNMODES['SQ_ASYNC_DAEMON']:
+                    instance.save_base()
+    
     def south_field_triple(self):
-        """
-        Represent the field properly to the django-south model inspector.
-        See also: http://south.aeracode.org/docs/extendingintrospection.html
-        """
         from south.modelsinspector import introspector
         args, kwargs = introspector(self)
         return ('imagekit.modelfields.EXIFMetaField', args, kwargs)
@@ -391,9 +426,11 @@ class HistogramColumn(models.IntegerField):
 
 class HistogramChannelDescriptor(object):
     """
-    Histogram channel descriptor for accessing the histogram channel data through the 
-    field referring to the histogram.
-    Implementation is derived from django.db.models.fields.files.FileDescriptor.
+    Histogram channel descriptor for accessing the histogram channel data,
+    via the field referring to the histogram.
+    
+    The implementation is derived from django.db.models.fields.files.FileDescriptor.
+    
     """
     
     def __init__(self, field):
@@ -500,7 +537,9 @@ class HistogramChannelField(models.CharField):
         
         setattr(cls, self.original_channel, HistogramChannelDescriptor(self))
         signals.pre_save.connect(self.refresh_histogram_channel, sender=cls,
-            dispatch_uid='histogramchannelfield-pre-save')
+            dispatch_uid='histogramchannelfield-pre-save-%s' % self.channel)
+        iksignals.clear_histogram_channels.connect(self.clear_histogram_channels, sender=cls,
+            dispatch_uid='histogramchannelfield-clear-histogram-channels-%s' % self.channel)
         
         if self.add_columns and not cls._meta.abstract:
             if hasattr(self, 'original_channel'):
@@ -513,22 +552,19 @@ class HistogramChannelField(models.CharField):
                     cls.add_to_class(histocolname, histocol)
     
     def refresh_histogram_channel(self, **kwargs):
-        """
-        Stores histogram column values in their respective db fields before saving
-        
-        """
+        """ Stores histogram column values in their respective db fields before saving. """
         if not kwargs.get('raw', False):
             instance = kwargs.get('instance')
             image = instance.image
-        
+            
             pil_reference = self.pil_reference
-        
+            
             try:
                 if callable(pil_reference):
                     pilimage = pil_reference(image)
                 else:
                     pilimage = getattr(image, getattr(self, 'pil_reference', 'pilimage'))
-        
+            
             except AttributeError, err:
                 logg.warning("*** Couldn't refresh histogram channel '%s' with callable (AttributeError was thrown: %s)" % (self.original_channel, err))
                 return
@@ -538,7 +574,7 @@ class HistogramChannelField(models.CharField):
             except IOError, err:
                 logg.warning("*** Couldn't refresh histogram channel '%s' with callable (IOError was thrown: %s)" % (self.original_channel, err))
                 return
-        
+            
             if pilimage:
                 if self.original_channel in pilimage.mode:
                     channel_data = pilimage.split()[pilimage.mode.index(self.original_channel)].histogram()[:256]
@@ -547,27 +583,35 @@ class HistogramChannelField(models.CharField):
                         setattr(instance, histocolname, int(channel_data[i]))
                     logg.info("Refreshed histogram channel %s" % self.original_channel)
     
+    def clear_histogram_channels(self, **kwargs): # signal, sender, instance
+        """ Clear histogram channels. """
+        instance = kwargs.get('instance')
+        image = instance.image
+        
+        logg.info("--- Clearing histogram channel %s from %s.%s %s" % (
+            self.channel,
+            image.__class__.__name__, self.name, image.id))
+        
+        for i in xrange(256):
+            histocolname = "__%s_%02X" % (self.original_channel, i)
+            setattr(instance, histocolname, 0)
+    
     def save_form_data(self, instance, data):
-        """
-        Not sure about this one.
-        """
+        """ Not sure about this one. """
         if data:
             setattr(instance, self.channel, data)
     
     def south_field_triple(self):
-        """
-        Represent the field properly to the django-south model inspector.
-        See also: http://south.aeracode.org/docs/extendingintrospection.html
-        """
         from south.modelsinspector import introspector
         args, kwargs = introspector(self)
         return ('imagekit.modelfields.HistogramChannelField', args, kwargs)
 
 class HistogramDescriptor(object):
     """
-    Histogram descriptor for accessing an instance of a HistogramBase subclass through the 
-    referrent field.
-    Implementation is derived from django.db.models.fields.files.FileDescriptor.
+    Histogram descriptor for accessing a histogram instance via the referrent field.
+    
+    The implementation is derived from django.db.models.fields.files.FileDescriptor.
+    
     """
     
     def __init__(self, field):
@@ -629,7 +673,6 @@ class Histogram(fields.CharField):
     against a constant, VALID_COLORSPACES.
     
     """
-    
     def __init__(self, colorspace="Luma", *args, **kwargs):
         for arg in ('primary_key', 'unique'):
             if arg in kwargs:
@@ -659,10 +702,13 @@ class Histogram(fields.CharField):
         super(Histogram, self).contribute_to_class(cls, name)
         if not cls._meta.abstract:
             setattr(cls, self.name, HistogramDescriptor(self))
+            
             signals.post_save.connect(self.queue_related_histogram_update, sender=cls,
                 dispatch_uid="histogram-post-save")
             iksignals.save_related_histogram.connect(self.save_related_histogram, sender=cls,
-                dispatch_uid='histogram-save-related-histogram')
+                dispatch_uid='histogram-save-related-histogram-%s' % self.colorspace)
+            iksignals.clear_cache.connect(self.clear_related_histogram, sender=cls,
+                dispatch_uid='histogram-clear-related-histogram-%s' % self.colorspace)
             
             histogram = generic.GenericRelation(imagekit.models.HISTOGRAMS.get(self.original_colorspace.lower()))
             histogram.verbose_name = "Related %s Histogram" % self.original_colorspace
@@ -674,16 +720,13 @@ class Histogram(fields.CharField):
         if not kwargs.get('raw', False):
             instance = kwargs.get('instance')
             sender = kwargs.get('sender')
-            logg.info("-- Enqueueing async signal 'save_related_histogram' for %s %s." % (sender.__name__, getattr(instance, 'pk', "<NONE>")))
+            logg.info("--- Enqueueing async signal 'save_related_histogram' for %s %s." % (
+                sender.__name__, getattr(instance, 'pk', "<NONE>")))
             iksignals.save_related_histogram.send(sender=sender, instance=instance)
     
     def save_related_histogram(self, **kwargs): # signal, sender, instance
-        """
-        Saves a histogram when its related ImageWithMetadata object is about to be saved.
-        
-        """
+        """ Saves a histogram when its related ImageWithMetadata object is about to be saved. """
         instance = kwargs.get('instance')
-        #logg.info("-- About to try and wring histograms out of '%s'." % getattr(instance, 'pk', "<NONE>"))
         
         if hasattr(instance, self.name):
             related_histogram = getattr(instance, self.name, None)
@@ -697,11 +740,30 @@ class Histogram(fields.CharField):
         else:
             logg.info("--X an ImageWithMetadata subclass didn't have a property for any sort of histogram for some reason, so we did no save.")
     
+    def clear_related_histogram(self, **kwargs): # signal, sender, instance
+        """ Clear the related histogram data. """
+        instance = kwargs.get('instance')
+        
+        if hasattr(instance, self.name):
+            related_histogram = getattr(instance, self.name, None)
+        
+        if related_histogram:
+            logg.info("--- Clearing %s from %s.%s %s" % (
+                related_histogram.__class__.__name__,
+                instance.__class__.__name__, self.name, instance.id))
+            
+            iksignals.clear_histogram_channels.send_now(sender=related_histogram.__class__,
+                instance=related_histogram)
+        
+        # save if sent asynchronously
+        dequeue_runmode = kwargs.get('dequeue_runmode', None)
+        enqueue_runmode = kwargs.get('enqueue_runmode', None)
+        if dequeue_runmode is not None:
+            if not dequeue_runmode == enqueue_runmode:
+                if dequeue_runmode == signalqueue.SQ_RUNMODES['SQ_ASYNC_DAEMON']:
+                    related_histogram.save_base()
+    
     def south_field_triple(self):
-        """
-        Represent the field properly to the django-south model inspector.
-        See also: http://south.aeracode.org/docs/extendingintrospection.html
-        """
         from south.modelsinspector import introspector
         args, kwargs = introspector(self)
         return ('imagekit.modelfields.Histogram', args, kwargs)
@@ -734,7 +796,6 @@ class ImageHashField(fields.CharField):
     to something that accommodates your hash length (and not more).
     
     """
-    
     def __init__(self, *args, **kwargs):
         self.pil_reference = kwargs.pop('pil_reference', 'pilimage')
         self.hasher = kwargs.pop('hasher', 'sha1')
@@ -753,18 +814,25 @@ class ImageHashField(fields.CharField):
             dispatch_uid='imagehashfield-pre-save')
         iksignals.refresh_hash.connect(self.refresh_hash, sender=cls,
             dispatch_uid='imagehashfield-refresh-hash')
+        iksignals.clear_cache.connect(self.clear_hash, sender=cls,
+            dispatch_uid='imagehashfield-clear-cache')
     
     def check_hash_field(self, **kwargs): # signal, sender, instance
         if not kwargs.get('raw', False):
             instance = kwargs.get('instance')
+            sender = kwargs.get('sender')
+            
             if not getattr(instance, self.name, None):
+                logg.info("--- Enqueueing async signal 'refresh_hash' for %s %s." % (
+                    sender.__name__, getattr(instance, 'pk', "<NONE>")))
                 iksignals.refresh_hash.send(sender=instance.__class__, instance=instance)
+            
+            else:
+                logg.info("~~~ Not sending 'refresh_hash' for %s %s (data has already been stored)." % (
+                    sender.__name__, getattr(instance, 'pk', "<NONE>")))
     
     def refresh_hash(self, **kwargs): # signal, sender, instance
-        """
-        Stores image hash data in the field before saving.
-        
-        """
+        """ Stores image hash data in the field before saving. """
         instance = kwargs.get('instance')
         
         try:
@@ -776,13 +844,13 @@ class ImageHashField(fields.CharField):
                 pilimage = getattr(instance, getattr(self, 'pil_reference', 'pilimage'))
         
         except AttributeError, err:
-            logg.warning("*** Couldn't get pilimage reference to refresh image hash (AttributeError was thrown: %s)" % err)
+            logg.warning("*** PIL problem when refreshing image hash (AttributeError was thrown: %s)" % err)
             return
         except TypeError, err:
-            logg.warning("*** Couldn't get pilimage reference to refresh image hash (TypeError was thrown: %s)" % err)
+            logg.warning("*** PIL problem when refreshing image hash (TypeError was thrown: %s)" % err)
             return
         except IOError, err:
-            logg.warning("*** Couldn't get pilimage reference to refresh image hash (IOError was thrown: %s)" % err)
+            logg.warning("*** PIL problem when refreshing image hash (IOError was thrown: %s)" % err)
             return
         
         if pilimage:
@@ -810,6 +878,10 @@ class ImageHashField(fields.CharField):
                 logg.warning("*** Couldn't refresh image hash (IOError was thrown: %s)" % err)
                 return
             
+            else:
+                logg.info("Updated image hash: %s.%s %s" % (
+                    instance.__class__.__name__, self.name, instance.id))
+            
             # save if sent asynchronously
             dequeue_runmode = kwargs.get('dequeue_runmode', None)
             enqueue_runmode = kwargs.get('enqueue_runmode', None)
@@ -818,11 +890,23 @@ class ImageHashField(fields.CharField):
                     if dequeue_runmode == signalqueue.SQ_RUNMODES['SQ_ASYNC_DAEMON']:
                         instance.save_base()
     
+    def clear_hash(self, **kwargs): # signal, sender, instance
+        """ Clear the image hash. """
+        instance = kwargs.get('instance')
+        
+        logg.info("--- Clearing image hash from %s.%s %s" % (
+            instance.__class__.__name__, self.name, instance.id))
+        setattr(instance, self.name, None)
+        
+        # save if sent asynchronously
+        dequeue_runmode = kwargs.get('dequeue_runmode', None)
+        enqueue_runmode = kwargs.get('enqueue_runmode', None)
+        if dequeue_runmode is not None:
+            if not dequeue_runmode == enqueue_runmode:
+                if dequeue_runmode == signalqueue.SQ_RUNMODES['SQ_ASYNC_DAEMON']:
+                    instance.save_base()
+        
     def south_field_triple(self):
-        """
-        Represent the field properly to the django-south model inspector.
-        See also: http://south.aeracode.org/docs/extendingintrospection.html
-        """
         from south.modelsinspector import introspector
         args, kwargs = introspector(self)
         return ('imagekit.modelfields.ImageHashField', args, kwargs)
@@ -841,7 +925,6 @@ class ICCHashField(fields.CharField):
     whenever you hit save in the admin (or what have you).
     
     """
-    
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('db_index', True)
         kwargs.setdefault('max_length', 40)
@@ -852,10 +935,6 @@ class ICCHashField(fields.CharField):
         super(ICCHashField, self).__init__(*args, **kwargs)
     
     def south_field_triple(self):
-        """
-        Represent the field properly to the django-south model inspector.
-        See also: http://south.aeracode.org/docs/extendingintrospection.html
-        """
         from south.modelsinspector import introspector
         args, kwargs = introspector(self)
         return ('imagekit.modelfields.ICCHashField', args, kwargs)
@@ -920,20 +999,29 @@ class RGBColorField(models.CharField):
         signals.pre_save.connect(self.check_rgb_color_field, sender=cls,
             dispatch_uid='rgbcolorfield-pre-save')
         iksignals.refresh_color.connect(self.refresh_color, sender=cls,
-            dispatch_uid='rgbcolorfield-refresh-color')
+            dispatch_uid='rgbcolorfield-refresh-color-%s' % self.name and self.name or self.verbose_name)
+        iksignals.clear_cache.connect(self.clear_color, sender=cls,
+            dispatch_uid='rgbcolorfield-clear-color-%s' % self.name and self.name or self.verbose_name)
     
     def check_rgb_color_field(self, **kwargs):
         if not kwargs.get('raw', False):
             instance = kwargs.get('instance')
+            sender = kwargs.get('sender')
+            
             if not getattr(instance, self.name, None):
                 if self.extractor is not None:
-                    iksignals.refresh_color.send(sender=instance.__class__, instance=instance)
+                    logg.info("--- Enqueueing async signal 'refresh_color' for %s %s." % (
+                        sender.__name__, getattr(instance, 'pk', "<NONE>")))
+                    iksignals.refresh_color.send(sender=sender, instance=instance)
+                
+                else:
+                    logg.info("~~~ Not sending 'refresh_color' for %s %s (No extractor was specified)." % (
+                        sender.__name__, getattr(instance, 'pk', "<NONE>")))
+            else:
+                logg.info("~~~ Not sending 'refresh_color' for %s %s (A value has already been stored)." % (
+                    sender.__name__, getattr(instance, 'pk', "<NONE>")))
     
     def refresh_color(self, **kwargs): # signal, sender, instance
-        """
-        Stores image hash data in the field before saving.
-        
-        """
         instance = kwargs.get('instance')
         extractor = self.extractor
         
@@ -950,6 +1038,10 @@ class RGBColorField(models.CharField):
             except IOError, err:
                 logg.warning("""*** Couldn't refresh color '%s' (IOError was thrown: %s)""" % (self.name, err))
                 return
+            
+            else:
+                logg.info("Refreshed color field '%s'" % (self.name and self.name or self.verbose_name))
+            
         else:
             # call the named method on the ImageModel instance
             try:
@@ -965,6 +1057,25 @@ class RGBColorField(models.CharField):
             except IOError, err:
                 logg.warning("""*** Couldn't refresh color '%s' (IOError was thrown: %s)""" % (self.name, err))
                 return
+            
+            else:
+                logg.info("Refreshed color field '%s'" % (self.name and self.name or self.verbose_name))
+        
+        # save if sent asynchronously
+        dequeue_runmode = kwargs.get('dequeue_runmode', None)
+        enqueue_runmode = kwargs.get('enqueue_runmode', None)
+        if dequeue_runmode is not None:
+            if not dequeue_runmode == enqueue_runmode:
+                if dequeue_runmode == signalqueue.SQ_RUNMODES['SQ_ASYNC_DAEMON']:
+                    instance.save_base()
+    
+    def clear_color(self, **kwargs): # signal, sender, instance
+        """ Clear the color value. """
+        instance = kwargs.get('instance')
+        
+        logg.info("--- Clearing color value from %s.%s %s" % (
+            instance.__class__.__name__, self.name, instance.id))
+        setattr(instance, self.name, None)
         
         # save if sent asynchronously
         dequeue_runmode = kwargs.get('dequeue_runmode', None)
@@ -990,9 +1101,7 @@ django.db.models.fields.images I believe.
 
 """
 class ICCFile(File):
-    """
-    django.core.files.File subclass with ICC profile support.
-    """
+    """ django.core.files.File subclass with ICC profile support. """
     def _load_icc_file(self):
         if not hasattr(self, "_profile_cache"):
             close = self.closed
@@ -1018,9 +1127,7 @@ class ICCFile(File):
     hsh = property(_get_hsh)
 
 class ICCFileDescriptor(files.FileDescriptor):
-    """
-    django.db.models.fields.files.FileDescriptor subclass with ICC profile support.
-    """
+    """ django.db.models.fields.files.FileDescriptor subclass with ICC profile support. """
     def __set__(self, instance, value):
         previous_file = instance.__dict__.get(self.field.name)
         super(ICCFileDescriptor, self).__set__(instance, value)
@@ -1028,18 +1135,14 @@ class ICCFileDescriptor(files.FileDescriptor):
             self.field.update_data_fields(instance, force=True)
 
 class ICCFieldFile(ICCFile, files.FieldFile):
-    """
-    django.db.models.fields.files.FileDescriptor subclass with ICC profile support.
-    """
+    """ django.db.models.fields.files.FileDescriptor subclass with ICC profile support. """
     def delete(self, save=True):
         if hasattr(self, '_profile_cache'):
             del self._profile_cache
         super(ICCFieldFile, self).delete(save)
 
 class ICCField(files.FileField):
-    """
-    django.db.models.fields.files.FileField subclass with ICC profile support.
-    """
+    """ django.db.models.fields.files.FileField subclass with ICC profile support. """
     attr_class = ICCFieldFile
     descriptor_class = ICCFileDescriptor
     description = ugettext_lazy("ICC file path")
@@ -1092,18 +1195,12 @@ class ICCField(files.FileField):
             setattr(instance, self.hash_field, hsh)
     
     def south_field_triple(self):
-        """
-        Represent the field properly to the django-south model inspector.
-        See also: http://south.aeracode.org/docs/extendingintrospection.html
-        """
         from south.modelsinspector import introspector
         args, kwargs = introspector(self)
         return ('imagekit.modelfields.ICCField', args, kwargs)
 
-"""
-South has assuaged me, so I'm happy to assuage it.
 
-"""
+""" South has assuaged me, so I'm happy to assuage it."""
 try:
     from south.modelsinspector import add_introspection_rules
 except ImportError:

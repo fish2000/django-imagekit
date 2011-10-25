@@ -243,13 +243,13 @@ class ImageModel(models.Model):
         is_new_object = self._get_pk_val() is None
         clear_cache = kwargs.pop('clear_cache', False)
         
-        super(ImageModel, self).save(*args, **kwargs)
-        
         if is_new_object and self._imgfield:
             clear_cache = False
         
         if clear_cache:
             iksignals.clear_cache.send_now(sender=self.__class__, instance=self)
+        
+        super(ImageModel, self).save(*args, **kwargs)
         
         #logg.info("About to send the pre_cache signal...")
         return iksignals.pre_cache.send_now(sender=self.__class__, instance=self)

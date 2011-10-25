@@ -72,3 +72,7 @@ refresh_histogram_channel = AsyncSignal(providing_args={
     'instance':             mappings.ModelInstanceMap, 
     'channel_name':         mappings.IDMap,
 })
+
+clear_histogram_channels = AsyncSignal(providing_args={
+    'instance':             mappings.ModelInstanceMap, 
+})
