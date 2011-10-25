@@ -976,7 +976,7 @@ class RGBColorField(models.CharField):
         if hasattr(value, 'hex'):
             return value
         
-        if value is not None:
+        if value:
             if str(value).startswith('#'):
                 return colors.Color("%s" % str(value))
             else:
