@@ -30,9 +30,9 @@ cdef extern from "stdlib.h":
 
 cdef class Atkinsonify:
     
-    cdef float threshold
-    cdef object format
-    cdef object extension
+    cdef readonly float threshold
+    cdef readonly object format
+    cdef readonly object extension
     
     def __cinit__(self,
         float threshold=128.0,
