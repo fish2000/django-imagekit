@@ -978,9 +978,9 @@ class RGBColorField(models.CharField):
         
         if value is not None:
             if str(value).startswith('#'):
-                return colors.Color("%s" % value)
+                return colors.Color("%s" % str(value))
             else:
-                return colors.Color("#%s" % value)
+                return colors.Color("#%s" % str(value))
         
         return None
     
