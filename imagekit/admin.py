@@ -27,18 +27,11 @@ class ICCModelAdmin(admin.ModelAdmin):
     
     list_display = (
         'icc_download',
-        #'modifydate',
         #'icc_description',
         'icc_colorspace',
         'icc_flot_cie1931',
         'icc_profileinfo_dump',
         'icc_flot_rgb_trc',
-        #'icc_connectionspace',
-        #'icc_renderingintent',
-        #'icc_profileclass',
-        #'icc_technology',
-        #'icc_devicemodel',
-        #'icc_manufacturer',
     )
     
     list_display_links = ('icc_colorspace',)
@@ -65,55 +58,13 @@ class ICCModelAdmin(admin.ModelAdmin):
         return u'<i style="color: lightgray;">No File</i>'
     icc_download.short_description = "File D/L"
     icc_download.allow_tags = True
-    
-    def icc_manufacturer(self, obj):
-        if obj.icc:
-            return obj.icc.getDeviceManufacturerDescription() or u'<i style="color: lightgray;">None</i>'
-        return u'<i style="color: lightgray;">None</i>'
-    icc_manufacturer.short_description = "Manufacturer"
-    icc_manufacturer.allow_tags = True
-    
-    def icc_devicemodel(self, obj):
-        if obj.icc:
-            return obj.icc.getDeviceModelDescription() or u'<i style="color: lightgray;">None</i>'
-        return u'<i style="color: lightgray;">None</i>'
-    icc_devicemodel.short_description = "Device Model"
-    icc_devicemodel.allow_tags = True
-    
-    def icc_renderingintent(self, obj):
-        if obj.icc:
-            return obj.icc.getRenderingIntent() or u'<i style="color: lightgray;">None</i>'
-        return u'<i style="color: lightgray;">None</i>'
-    icc_renderingintent.short_description = "Rendering Intent"
-    icc_renderingintent.allow_tags = True
-    
-    def icc_profileclass(self, obj):
-        if obj.icc:
-            return obj.icc.getProfileClass() or u'<i style="color: lightgray;">None</i>'
-        return u'<i style="color: lightgray;">None</i>'
-    icc_profileclass.short_description = "Profile Class"
-    icc_profileclass.allow_tags = True
-    
-    def icc_technology(self, obj):
-        if obj.icc:
-            return obj.icc.getTechnologySummary() or u'<i style="color: lightgray;">None</i>'
-        return u'<i style="color: lightgray;">None</i>'
-    icc_technology.short_description = "Technology Summary"
-    icc_technology.allow_tags = True
-    
+        
     def icc_colorspace(self, obj):
         if obj.icc:
             return unicode(obj.icc.colorSpace) or u'<i style="color: lightgray;">None</i>'
         return u'<i style="color: lightgray;">None</i>'
     icc_colorspace.short_description = "Colorspace"
     icc_colorspace.allow_tags = True
-    
-    def icc_connectionspace(self, obj):
-        if obj.icc:
-            return obj.icc.connectionColorSpace or u'<i style="color: lightgray;">None</i>'
-        return u'<i style="color: lightgray;">None</i>'
-    icc_connectionspace.short_description = "Connection space (PCS)"
-    icc_connectionspace.allow_tags = True
     
     def icc_profileinfo_dump(self, obj):
         if obj.icc:
@@ -577,13 +528,9 @@ class ProofAdmin(admin.ModelAdmin):
     with_proofprofile.allow_tags = True
 
 
-
 admin.site.register(imagekit.models.ICCModel, ICCModelAdmin)
 admin.site.register(imagekit.models.RGBHistogram, RGBHistogramAdmin)
 admin.site.register(imagekit.models.LumaHistogram, LumaHistogramAdmin)
 admin.site.register(imagekit.models.Proof, ProofAdmin)
-
-#admin.site.index_template = os.path.join(IK_ROOT, 'templates/admin/index_with_queues.html')
-#admin.site.app_index_template = os.path.join(IK_ROOT, 'templates/admin/app_index.html')
 
 

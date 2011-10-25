@@ -23,16 +23,19 @@ import random
 cdef extern from "processors.h":
     unsigned char adderror(int b, int e)
     unsigned char* threshold_matrix
+    int c_min(int a, int b)
 
 cdef extern from "stdlib.h":
     int c_abs "abs"(int i)
 
 cdef class Atkinsonify:
     
-    cdef readonly float threshold
-    cdef readonly object format
-    cdef readonly object extension
+    cdef float threshold
+    cdef object format
+    cdef object extension
     
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
     def __cinit__(self,
         float threshold=128.0,
         format="PNG",
@@ -46,6 +49,7 @@ cdef class Atkinsonify:
             threshold_matrix[i] = int(i/self.threshold)
     
     @cython.boundscheck(False)
+    @cython.wraparound(False)
     def process(self not None, pilimage not None, format not None, obj not None):
         in_array = misc.fromimage(pilimage, flatten=True).astype(numpy.uint8)
         self.atkinson(in_array)
@@ -54,9 +58,9 @@ cdef class Atkinsonify:
     
     @cython.boundscheck(False)
     @cython.wraparound(False)
-    def atkinson(self, numpy.ndarray[numpy.uint8_t, ndim=2, mode="c"] image_i not None):
+    cdef inline void atkinson(self, numpy.ndarray[numpy.uint8_t, ndim=2, mode="c"] image_i):
         
-        cdef int x, y, w, h, i
+        cdef int x, y, w, h, i, nx, ny
         cdef int err
         cdef unsigned char old, new
         
@@ -71,11 +75,10 @@ cdef class Atkinsonify:
                 
                 image_i[x, y] = adderror(image_i[x, y], err)
                 
-                for nxy in [(x+1, y), (x+2, y), (x-1, y+1), (x, y+1), (x+1, y+1), (x, y+2)]:
-                    try:
-                        image_i[nxy[0], nxy[1]] = (image_i[nxy[0], nxy[1]] + err)
-                    except IndexError:
-                        pass
+                for nxy in ((x+1, y), (x+2, y), (x-1, y+1), (x, y+1), (x+1, y+1), (x, y+2)):
+                    nx = c_min(nxy[0], w)
+                    ny = c_min(nxy[1], h)
+                    image_i[nx, ny] = image_i[nx, ny] + err
 
 
 cdef class StentifordModel:

@@ -271,6 +271,10 @@ class Atkinsonify(Format):
     format = 'PNG'                      # default; 'BMP' should also work.
     extension = format.lower()
     threshold = 128.0
+    
+    @classmethod
+    def process(cls, img, fmt, obj):
+        return Atkinsonify_YoDogg.process(img, fmt, obj)
 
 class Atkinsonify_YoDogg(Format):
     """
