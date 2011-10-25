@@ -79,9 +79,16 @@ cdef class Atkinsonify:
                 image_i[x, y] = adderror(image_i[x, y], err)
                 
                 for nxy in ((x+1, y), (x+2, y), (x-1, y+1), (x, y+1), (x+1, y+1), (x, y+2)):
-                    nx = c_min(nxy[0], w)
-                    ny = c_min(nxy[1], h)
-                    image_i[nx, ny] = image_i[nx, ny] + err
+                    #nx = c_min(nxy[0], w)
+                    #ny = c_min(nxy[1], h)
+                    
+                    nx = nxy[0]
+                    ny = nxy[1]
+                    
+                    try:
+                        image_i[nx, ny] = image_i[nx, ny] + err
+                    except IndexError:
+                        pass
 
 
 cdef class StentifordModel:
