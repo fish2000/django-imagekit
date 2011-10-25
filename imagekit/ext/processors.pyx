@@ -34,9 +34,7 @@ cdef class Atkinsonify:
     cdef object format
     cdef object extension
     
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
-    def __init__(self,
+    def __cinit__(self,
         float threshold=128.0,
         format="PNG",
         extension="png"):
