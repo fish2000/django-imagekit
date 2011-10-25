@@ -198,7 +198,7 @@ class ImageModel(models.Model):
             return out
         return []
     
-    def topsat(self, samplesize=10):
+    def _topsat(self, samplesize=10):
         try:
             return "#" + "".join(map(lambda x: "%02X" % int(x*255),
                 map(lambda x: hls_to_rgb(x[0], x[1], x[2]), [
@@ -209,22 +209,22 @@ class ImageModel(models.Model):
         except TypeError:
             return ""
     
-    def dominanthex(self):
+    def _dominanthex(self):
         return hexstr(self._dominant())
     
-    def meanhex(self):
+    def _meanhex(self):
         m = self._mean()
         if len(m) == 3:
             return hexstr((int(m[0]), int(m[1]), int(m[2])))
         return hexstr((int(m[0]), int(m[0]), int(m[0])))
     
-    def averagehex(self):
+    def _averagehex(self):
         return hexstr(self._average())
     
-    def medianhex(self):
+    def _medianhex(self):
         return hexstr(self._median()[1])
     
-    def tophex(self, numcolors=3):
+    def _tophex(self, numcolors=3):
         return [hexstr(tc[1]) for tc in self._topcolors(numcolors)]
     
     def save_image(self, name, image, save=True, replace=True):
@@ -710,16 +710,19 @@ class ImageWithMetadata(ImageModel):
     
     # We can sort by these color values.
     dominantcolor = RGBColorField(verbose_name="Dominant Color",
-        extractor=lambda instance: instance.dominanthex())
+        extractor=lambda instance: instance._dominanthex())
     
     meancolor = RGBColorField(verbose_name="Mean Color",
-        extractor=lambda instance: instance.meanhex())
+        extractor=lambda instance: instance._meanhex())
     
     averagecolor = RGBColorField(verbose_name="Average Color",
-        extractor=lambda instance: instance.averagehex())
+        extractor=lambda instance: instance._averagehex())
     
     mediancolor = RGBColorField(verbose_name="Median Color",
-        extractor=lambda instance: instance.medianhex())
+        extractor=lambda instance: instance._medianhex())
+    
+    dominantvalue = RGBColorField(verbose_name="Dominant Color Value, By Saturation",
+        extractor=lambda instance: instance._topsat(samplesize=20))
     
     # EXIF image metadata
     exif = EXIFMetaField(verbose_name="EXIF data",
@@ -737,13 +740,16 @@ class ImageWithMetadata(ImageModel):
     # Unique hash of ICC profile data (for fast DB searching)
     icchash = ICCHashField(verbose_name="ICC embedded profile hash",
         unique=False, # ICCHashField defaults to unique=True
+        db_index=True,
+        default=None,
         editable=True,
         blank=True,
         null=True)
     
     # Unique hash of the image data
     imagehash = ImageHashField(verbose_name="Image data hash",
-        editable=True)
+        editable=True,
+        db_index=True)
     
     def proofimage(self, proofprofile, sourceprofile=None, **kwargs):
         
