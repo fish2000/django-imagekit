@@ -141,7 +141,7 @@ class FileAccessor(AccessorBase):
                 try:
                     imgfile = img_to_fobj(self._img, format, quality=70, optimize=True)
                 except IOError:
-                    warnings.warn('---\t saving at quality 70 (optimized) raised IOError' % int(self.spec.quality))
+                    warnings.warn('---\t saving at quality 70 (optimized) raised IOError')
                     imgfile = img_to_fobj(self._img, format, quality=70)
         return imgfile
     
