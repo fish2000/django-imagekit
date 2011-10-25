@@ -36,7 +36,7 @@ cdef class Atkinsonify:
     
     @cython.boundscheck(False)
     @cython.wraparound(False)
-    def __cinit__(self,
+    def __init__(self,
         float threshold=128.0,
         format="PNG",
         extension="png"):
@@ -51,14 +51,19 @@ cdef class Atkinsonify:
     @cython.boundscheck(False)
     @cython.wraparound(False)
     def process(self not None, pilimage not None, format not None, obj not None):
+        cdef numpy.ndarray[numpy.uint8_t, ndim=2, mode="c"] in_array
+        
         in_array = misc.fromimage(pilimage, flatten=True).astype(numpy.uint8)
         self.atkinson(in_array)
+        
         pilout = misc.toimage(in_array)
+        in_array = None
+        
         return pilout, format
     
     @cython.boundscheck(False)
     @cython.wraparound(False)
-    cdef inline void atkinson(self, numpy.ndarray[numpy.uint8_t, ndim=2, mode="c"] image_i):
+    def atkinson(self not None, numpy.ndarray[numpy.uint8_t, ndim=2, mode="c"] image_i not None):
         
         cdef int x, y, w, h, i, nx, ny
         cdef int err

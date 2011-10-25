@@ -14,9 +14,11 @@ import os, tempfile, shutil, logging
 from django.conf import settings
 import imagekit.schmettings
 imagekit.schmettings.__dict__.update({
-    'NOSE_ARGS': ['--rednose', '--nocapture', '--nologcapture', '--with-profile', '--profile-sort=cumulative'],
+    'NOSE_ARGS': ['--rednose', '--nocapture', '--nologcapture'],
     'SQ_ASYNC': True,
 })
+
+# '--with-profile', '--profile-sort=cumulative'
 
 if not settings.configured:
     settings.configure(**imagekit.schmettings.__dict__)
