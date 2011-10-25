@@ -126,11 +126,20 @@ class ImageModel(models.Model):
         return getattr(self._ik, 'storage')
     
     @property
-    @memoize
     def pilimage(self):
+        if hasattr(self, '_pilimage'):
+            return self._pilimage
+        
         if self.pk:
-            if self._imgfield:
-                return Image.open(self._imgfield.file)
+            if self._imgfield.name:
+                try:
+                    #out = Image.open(self._imgfield.file)
+                    out = Image.open(self._storage.open(self._imgfield.name))
+                except IOError, err:
+                    return None
+                else:
+                    self._pilimage = out
+                    return out
         return None
     
     def _cvimage_via_pil(self):
@@ -243,6 +252,14 @@ class ImageModel(models.Model):
         is_new_object = self._get_pk_val() is None
         clear_cache = kwargs.pop('clear_cache', False)
         
+        if is_new_object:
+            self._meta.auto_created = True
+            
+            #self.save_base(*[], **dict(kwargs.items() + dict(cls=self.__class__).items()))
+            self.save_base(*[], **kwargs)
+            
+            self._meta.auto_created = False
+        
         if is_new_object and self._imgfield:
             clear_cache = False
         
@@ -252,7 +269,7 @@ class ImageModel(models.Model):
         super(ImageModel, self).save(*args, **kwargs)
         
         #logg.info("About to send the pre_cache signal...")
-        return iksignals.pre_cache.send_now(sender=self.__class__, instance=self)
+        iksignals.pre_cache.send_now(sender=self.__class__, instance=self)
     
     def delete(self, *args, **kwargs):
         clear_cache = kwargs.pop('clear_cache', False)

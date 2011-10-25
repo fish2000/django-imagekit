@@ -227,8 +227,7 @@ class ICCMetaField(ICCDataField):
                 enqueue_runmode = kwargs.get('enqueue_runmode', None)
                 if dequeue_runmode is not None:
                     if not dequeue_runmode == enqueue_runmode:
-                        if dequeue_runmode == signalqueue.SQ_RUNMODES['SQ_ASYNC_DAEMON']:
-                            instance.save_base()
+                        instance.save_base(cls=instance.__class__)
     
     def clear_icc_data(self, **kwargs): # signal, sender, instance
         """ Clears both the ICC data and the hash (if an ICCHashField was specified). """
@@ -248,8 +247,7 @@ class ICCMetaField(ICCDataField):
         enqueue_runmode = kwargs.get('enqueue_runmode', None)
         if dequeue_runmode is not None:
             if not dequeue_runmode == enqueue_runmode:
-                if dequeue_runmode == signalqueue.SQ_RUNMODES['SQ_ASYNC_DAEMON']:
-                    instance.save_base()
+                instance.save_base(cls=instance.__class__)
     
     def south_field_triple(self):
         from south.modelsinspector import introspector
@@ -364,8 +362,7 @@ class EXIFMetaField(models.TextField):
             enqueue_runmode = kwargs.get('enqueue_runmode', None)
             if dequeue_runmode is not None:
                 if not dequeue_runmode == enqueue_runmode:
-                    if dequeue_runmode == signalqueue.SQ_RUNMODES['SQ_ASYNC_DAEMON']:
-                        instance.save_base()
+                    instance.save_base(cls=instance.__class__)
     
     def clear_exif_data(self, **kwargs): # signal, sender, instance
         """ Stores EXIF metadata in the field before saving. """
@@ -380,8 +377,7 @@ class EXIFMetaField(models.TextField):
         enqueue_runmode = kwargs.get('enqueue_runmode', None)
         if dequeue_runmode is not None:
             if not dequeue_runmode == enqueue_runmode:
-                if dequeue_runmode == signalqueue.SQ_RUNMODES['SQ_ASYNC_DAEMON']:
-                    instance.save_base()
+                instance.save_base(cls=instance.__class__)
     
     def south_field_triple(self):
         from south.modelsinspector import introspector
@@ -760,7 +756,7 @@ class Histogram(fields.CharField):
         enqueue_runmode = kwargs.get('enqueue_runmode', None)
         if dequeue_runmode is not None:
             if not dequeue_runmode == enqueue_runmode:
-                if dequeue_runmode == signalqueue.SQ_RUNMODES['SQ_ASYNC_DAEMON']:
+
                     related_histogram.save_base()
     
     def south_field_triple(self):
@@ -887,8 +883,7 @@ class ImageHashField(fields.CharField):
             enqueue_runmode = kwargs.get('enqueue_runmode', None)
             if dequeue_runmode is not None:
                 if not dequeue_runmode == enqueue_runmode:
-                    if dequeue_runmode == signalqueue.SQ_RUNMODES['SQ_ASYNC_DAEMON']:
-                        instance.save_base()
+                    instance.save_base(cls=instance.__class__)
     
     def clear_hash(self, **kwargs): # signal, sender, instance
         """ Clear the image hash. """
@@ -903,8 +898,7 @@ class ImageHashField(fields.CharField):
         enqueue_runmode = kwargs.get('enqueue_runmode', None)
         if dequeue_runmode is not None:
             if not dequeue_runmode == enqueue_runmode:
-                if dequeue_runmode == signalqueue.SQ_RUNMODES['SQ_ASYNC_DAEMON']:
-                    instance.save_base()
+                instance.save_base(cls=instance.__class__)
         
     def south_field_triple(self):
         from south.modelsinspector import introspector
@@ -1071,8 +1065,7 @@ class RGBColorField(models.CharField):
         enqueue_runmode = kwargs.get('enqueue_runmode', None)
         if dequeue_runmode is not None:
             if not dequeue_runmode == enqueue_runmode:
-                if dequeue_runmode == signalqueue.SQ_RUNMODES['SQ_ASYNC_DAEMON']:
-                    instance.save_base()
+                instance.save_base(cls=instance.__class__)
     
     def clear_color(self, **kwargs): # signal, sender, instance
         """ Clear the color value. """
@@ -1087,8 +1080,7 @@ class RGBColorField(models.CharField):
         enqueue_runmode = kwargs.get('enqueue_runmode', None)
         if dequeue_runmode is not None:
             if not dequeue_runmode == enqueue_runmode:
-                if dequeue_runmode == signalqueue.SQ_RUNMODES['SQ_ASYNC_DAEMON']:
-                    instance.save_base()
+                instance.save_base(cls=instance.__class__)
     
     def south_field_triple(self):
         from south.modelsinspector import introspector
