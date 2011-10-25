@@ -23,7 +23,6 @@ import random
 cdef extern from "processors.h":
     unsigned char adderror(int b, int e)
     unsigned char* threshold_matrix
-    int c_min(int a, int b)
 
 cdef extern from "stdlib.h":
     int c_abs "abs"(int i)
@@ -47,23 +46,17 @@ cdef class Atkinsonify:
             threshold_matrix[i] = int(i/self.threshold)
     
     @cython.boundscheck(False)
-    @cython.wraparound(False)
     def process(self not None, pilimage not None, format not None, obj not None):
-        cdef numpy.ndarray[numpy.uint8_t, ndim=2, mode="c"] in_array
-        
         in_array = misc.fromimage(pilimage, flatten=True).astype(numpy.uint8)
         self.atkinson(in_array)
-        
         pilout = misc.toimage(in_array)
-        in_array = None
-        
         return pilout, format
     
     @cython.boundscheck(False)
     @cython.wraparound(False)
-    def atkinson(self not None, numpy.ndarray[numpy.uint8_t, ndim=2, mode="c"] image_i not None):
+    def atkinson(self, numpy.ndarray[numpy.uint8_t, ndim=2, mode="c"] image_i not None):
         
-        cdef int x, y, w, h, i, nx, ny
+        cdef int x, y, w, h, i
         cdef int err
         cdef unsigned char old, new
         
@@ -78,15 +71,9 @@ cdef class Atkinsonify:
                 
                 image_i[x, y] = adderror(image_i[x, y], err)
                 
-                for nxy in ((x+1, y), (x+2, y), (x-1, y+1), (x, y+1), (x+1, y+1), (x, y+2)):
-                    #nx = c_min(nxy[0], w)
-                    #ny = c_min(nxy[1], h)
-                    
-                    nx = nxy[0]
-                    ny = nxy[1]
-                    
+                for nxy in [(x+1, y), (x+2, y), (x-1, y+1), (x, y+1), (x+1, y+1), (x, y+2)]:
                     try:
-                        image_i[nx, ny] = image_i[nx, ny] + err
+                        image_i[nxy[0], nxy[1]] = (image_i[nxy[0], nxy[1]] + err)
                     except IndexError:
                         pass
 
@@ -342,4 +329,3 @@ cdef class StentifordModel:
         #return None
     
 
-                
