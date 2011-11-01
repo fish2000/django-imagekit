@@ -573,11 +573,15 @@ class HistogramChannelField(models.CharField):
             
             if pilimage:
                 if self.original_channel in pilimage.mode:
-                    channel_data = pilimage.split()[pilimage.mode.index(self.original_channel)].histogram()[:256]
-                    for i in xrange(256):
-                        histocolname = "_%s_%02X" % (self.original_channel, i)
-                        setattr(instance, histocolname, int(channel_data[i]))
-                    logg.info("Refreshed histogram channel %s" % self.original_channel)
+                    try:
+                        channel_data = pilimage.split()[pilimage.mode.index(self.original_channel)].histogram()[:256]
+                    except AttributeError:
+                        logg.info("Refresh of histogram channel %s failed, image data has to be saved first." % self.original_channel)
+                    else:
+                        for i in xrange(256):
+                            histocolname = "_%s_%02X" % (self.original_channel, i)
+                            setattr(instance, histocolname, int(channel_data[i]))
+                        logg.info("Refreshed histogram channel %s" % self.original_channel)
     
     def clear_histogram_channels(self, **kwargs): # signal, sender, instance
         """ Clear histogram channels. """
