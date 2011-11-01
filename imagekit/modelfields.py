@@ -453,7 +453,7 @@ class HistogramChannelDescriptor(object):
             out = []
             if histogram_channel:
                 for i in xrange(256):
-                    histocolname = "__%s_%02X" % (histogram_channel, i)
+                    histocolname = "_%s_%02X" % (histogram_channel, i)
                     out.append(getattr(instance, histocolname))
             return to_matrix(out)
         
@@ -541,7 +541,7 @@ class HistogramChannelField(models.CharField):
             if hasattr(self, 'original_channel'):
                 for i in xrange(256):
                     histocol = HistogramColumn(channel=self.original_channel)
-                    histocolname = "__%s_%02X" % (self.original_channel, i)
+                    histocolname = "_%s_%02X" % (self.original_channel, i)
                     histocol.db_column = histocolname
                     histocol.verbose_name = histocolname
                     self.creation_counter = histocol.creation_counter + 1
@@ -575,7 +575,7 @@ class HistogramChannelField(models.CharField):
                 if self.original_channel in pilimage.mode:
                     channel_data = pilimage.split()[pilimage.mode.index(self.original_channel)].histogram()[:256]
                     for i in xrange(256):
-                        histocolname = "__%s_%02X" % (self.original_channel, i)
+                        histocolname = "_%s_%02X" % (self.original_channel, i)
                         setattr(instance, histocolname, int(channel_data[i]))
                     logg.info("Refreshed histogram channel %s" % self.original_channel)
     
@@ -589,7 +589,7 @@ class HistogramChannelField(models.CharField):
             image.__class__.__name__, self.name, image.id))
         
         for i in xrange(256):
-            histocolname = "__%s_%02X" % (self.original_channel, i)
+            histocolname = "_%s_%02X" % (self.original_channel, i)
             setattr(instance, histocolname, 0)
     
     def save_form_data(self, instance, data):

@@ -570,8 +570,7 @@ class HistogramBase(models.Model):
     # math.sqrt(reduce(operator.add, map(lambda h,i: h*(i**2), abs(axim.histogram_rgb.all - pxim.histogram_rgb.all), range(256*3))) / float(axim.w) * axim.h)
     
     def normalized(self, channel):
-        # ch*255.0/sum(ch)
-        return self[channel].astype(float) / max(self[channel])
+        return self[channel].astype(float) / max(self[channel]) # ch*255.0/sum(ch)
     
     @property
     def all(self):
