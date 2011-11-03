@@ -12,6 +12,8 @@ Copyright (c) 2011 Objects In Space And Time, LLC. All rights reserved.
 """
 import cython
 
+from cpython cimport bool
+
 cimport numpy
 import numpy
 numpy.import_array()
@@ -34,7 +36,7 @@ cdef class Atkinsonify:
     cdef readonly object extension
     
     def __cinit__(self,
-        float threshold=128.0,
+        int threshold = 128,
         format="PNG",
         extension="png"):
         
@@ -42,40 +44,63 @@ cdef class Atkinsonify:
         self.format = format
         self.extension = format.lower()
         
-        for i in xrange(255):
-            threshold_matrix[i] = int(i/self.threshold)
+        for i from 0 <= i < 256:
+            if i < self.threshold:
+                threshold_matrix[i] = 0x00
+            else:
+                threshold_matrix[i] = 0xFF
     
     @cython.boundscheck(False)
     def process(self not None, pilimage not None, format not None, obj not None):
-        in_array = misc.fromimage(pilimage, flatten=True).astype(numpy.uint8)
-        self.atkinson(in_array)
+        #in_array = misc.fromimage(pilimage, flatten=True).astype(numpy.uint8)
+        in_array = numpy.array(pilimage.convert("L"), dtype=numpy.uint8)
+        
+        atkinson(in_array)
         pilout = misc.toimage(in_array)
         return pilout, format
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def atkinson(numpy.ndarray[numpy.uint8_t, ndim=2, mode="c"] image_i not None):
     
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
-    def atkinson(self, numpy.ndarray[numpy.uint8_t, ndim=2, mode="c"] image_i not None):
-        
-        cdef int x, y, w, h, i
-        cdef int err
-        cdef unsigned char old, new
-        
-        w = image_i.shape[0]
-        h = image_i.shape[1]
-        
-        for y in xrange(h):
-            for x in xrange(w):
-                old = image_i[x, y]
-                new = threshold_matrix[old]
-                err = (old - new) >> 3
-                
-                image_i[x, y] = adderror(image_i[x, y], err)
-                
-                for nxy in [(x+1, y), (x+2, y), (x-1, y+1), (x, y+1), (x+1, y+1), (x, y+2)]:
-                    try:
-                        image_i[nxy[0], nxy[1]] = (image_i[nxy[0], nxy[1]] + err)
-                    except IndexError:
-                        pass
+    cdef int x, y, w, h, i
+    cdef int err
+    cdef unsigned char old, new
+    
+    w = image_i.shape[0]
+    h = image_i.shape[1]
+    
+    for y from 0 <= y < h:
+        for x from 0 <= x < w:
+            old = image_i[x, y]
+            new = threshold_matrix[old]
+            err = (old - new) >> 3
+            
+            image_i[x, y] = new
+            
+            # x+1, y
+            if x+1 < w:
+                image_i[x+1, y] = adderror(image_i[x+1, y], err);
+            
+            # x+2, y
+            if x+2 < w:
+                image_i[x+2, y] = adderror(image_i[x+2, y], err);
+            
+            # x-1, y+1
+            if x > 0 and y+1 < h:
+                image_i[x-1, y+1] = adderror(image_i[x-1, y+1], err);
+            
+            # x, y+1
+            if y+1 < h:
+                image_i[x, y+1] = adderror(image_i[x, y+1], err);
+            
+            # x+1, y+1
+            if x+1 < w and y+1 < h:
+                image_i[x+1, y+1] = adderror(image_i[x+1, y+1], err);
+            
+            # x, y+2
+            if y+2 < h:
+                image_i[x, y+2] = adderror(image_i[x, y+2], err);
 
 
 cdef class StentifordModel:
@@ -234,9 +259,9 @@ cdef class StentifordModel:
         
         self.possible_neighbors = numpy.array(from_the_block, dtype=self.dt)
     
-    def ogle(self, pilimage):
+    cpdef ogle(self, pilimage):
         cdef int x, y
-        match = True
+        cdef bool match = True
         
         # initialize attention model matrix with the dimensions of our image,
         # loaded with zeroes:
@@ -246,13 +271,14 @@ cdef class StentifordModel:
         ).reshape(*pilimage.size)
         
         # populate the matrix with per-pixel attention values
-        for x in xrange(self.radius, pilimage.size[0]-self.radius):
-            for y in xrange(self.radius, pilimage.size[1]-self.radius):
+        #  from 0 <= y < 
+        for x from self.radius <= x < pilimage.size[0]-self.radius:
+            for y from self.radius <= y < pilimage.size[1]-self.radius:
                 self.regentrify()
                 
                 xmatrix = self.there_goes_the_neighborhood(x, y, pilimage)
                 
-                for checks in xrange(self.max_checks):
+                for checks from 0 <= checks < self.max_checks:
                     ymatrix = self.there_goes_the_neighborhood(
                         random.randint(
                             0, (pilimage.size[0]-2*self.radius)+self.radius,
@@ -264,7 +290,7 @@ cdef class StentifordModel:
                     )
                     
                     match = True
-                    for idx in xrange(xmatrix.shape[0]):
+                    for idx from 0 <= idx < xmatrix.shape[0]:
                         if self.distance(xmatrix[idx], ymatrix[idx]) > self.max_dist:
                             match = False
                             break
@@ -297,7 +323,7 @@ cdef class StentifordModel:
         
         return numpy.array(out, dtype=self.dt)
     
-    def regentrify(self):
+    cdef regentrify(self):
         """
         Repopulate the random neighborhood array with random values,
         bounded by the size of possible_neighbors (which itself is
