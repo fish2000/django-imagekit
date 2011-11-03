@@ -22,12 +22,18 @@ from scipy import misc
 from PIL import Image
 import random
 
+ctypedef numpy.uint32_t uint32_t
+
+cdef int random_int(int top):
+    return random.randint(0, top)
+
 cdef extern from "processors.h":
     unsigned char adderror(int b, int e)
     unsigned char* threshold_matrix
 
 cdef extern from "stdlib.h":
     int c_abs "abs"(int i)
+    #int c_random "random"(int i)
 
 cdef class Atkinsonify:
     
@@ -108,8 +114,8 @@ cdef class StentifordModel:
     @cython.boundscheck(False)
     @cython.wraparound(False)
     def distance(self,
-        numpy.ndarray[numpy.int32_t, ndim=1, mode="c"] matrix_a not None,
-        numpy.ndarray[numpy.int32_t, ndim=1, mode="c"] matrix_b not None):
+        numpy.ndarray[numpy.uint32_t, ndim=1, mode="c"] matrix_a not None,
+        numpy.ndarray[numpy.uint32_t, ndim=1, mode="c"] matrix_b not None):
         
         return numpy.sum(numpy.abs(matrix_a - matrix_b))
     
@@ -226,47 +232,49 @@ cdef class StentifordModel:
     cdef int side
     cdef int cnt
     
-    dt = numpy.int32
+    dt = numpy.uint32
     
     def __init__(self, *args, **kwargs):
         self.neighborhood_size = kwargs.pop('neighborhood_size', self.neighborhood_size)
         self.max_checks = kwargs.pop('max_checks', self.max_checks)
         self.max_dist = kwargs.pop('max_dist', self.max_dist)
         
-        self.random_neighborhood = set(xrange(self.neighborhood_size))
         self.neighborhood_size = 3
+        self.random_neighborhood = set(xrange(self.neighborhood_size))
         self.max_checks = 100
         self.max_dist = 40
         self.radius = 2
         self.side = 0
-        self.cnt = 0
         
         super(StentifordModel, self).__init__(*args, **kwargs)
         random.seed()
         
         # compute possible neighbors with our params
         self.side = 2 * self.radius + 1
-        self.cnt = 0
         
         cdef int i, j
         
         from_the_block = list()
-        for i in xrange(self.radius*-1, self.radius+1):
-            for j in xrange(self.radius*-1, self.radius+1):
+        for i from self.radius*-1 <= i < self.radius+1:
+            for j from self.radius*-1 <= j < self.radius+1:
                 if j > 0 or i > 0:
                     from_the_block.append((i, j))
-                    self.cnt += 0
         
         self.possible_neighbors = numpy.array(from_the_block, dtype=self.dt)
     
-    cpdef ogle(self, pilimage):
-        cdef int x, y
+    def ogle(self, pilimage):
+        return self._ogle(numpy.array(pilimage.convert("RGB"), dtype=numpy.uint8), pilimage)
+    
+    cdef _ogle(self, numpy.ndarray[numpy.uint8_t, ndim=3, mode="c"] in_array, object pilimage):
+        cdef int x, y, idx, randx, randy
         cdef bool match = True
+        cdef numpy.ndarray xmatrix, ymatrix
+        
         
         # initialize attention model matrix with the dimensions of our image,
         # loaded with zeroes:
         self.attention_model = numpy.array(
-            [0] * len(pilimage.getdata()),
+            [0] * (pilimage.size[0] * pilimage.size[1]),
             dtype=self.dt,
         ).reshape(*pilimage.size)
         
@@ -276,17 +284,18 @@ cdef class StentifordModel:
             for y from self.radius <= y < pilimage.size[1]-self.radius:
                 self.regentrify()
                 
-                xmatrix = self.there_goes_the_neighborhood(x, y, pilimage)
+                xmatrix = numpy.array([(0,0,0)] * (pilimage.size[0] * pilimage.size[1]), dtype=self.dt)
+                self.there_goes_the_neighborhood(x, y, in_array, xmatrix)
                 
                 for checks from 0 <= checks < self.max_checks:
-                    ymatrix = self.there_goes_the_neighborhood(
-                        random.randint(
-                            0, (pilimage.size[0]-2*self.radius)+self.radius,
-                        ),
-                        random.randint(
-                            0, (pilimage.size[1]-2*self.radius)+self.radius,
-                        ),
-                        pilimage,
+                    randx = <int>((pilimage.size[0]-2*self.radius)+self.radius)
+                    randy = <int>((pilimage.size[1]-2*self.radius)+self.radius)
+                    
+                    ymatrix = numpy.array([(0,0,0)] * (pilimage.size[0] * pilimage.size[1]), dtype=self.dt)
+                    self.there_goes_the_neighborhood(
+                        random_int(randx),
+                        random_int(randy),
+                        in_array, ymatrix,
                     )
                     
                     match = True
@@ -298,30 +307,34 @@ cdef class StentifordModel:
                     if not match:
                         self.attention_model[x, y] += 1
     
-    cdef there_goes_the_neighborhood(self, int x, int y, object pilimage):
+    cdef there_goes_the_neighborhood(self, int x, int y,
+        numpy.ndarray[numpy.uint8_t, ndim=3, mode="c"] in_array,
+        numpy.ndarray[numpy.uint32_t, ndim=2, mode="c"] out_array):
         """
         Retrieve a neighborhood of values around a given pixel in the source image.
         
         """
         out = list()
         cdef int denizen
-        cdef int i_want_x, i_want_y
         cdef int r, g, b
         cdef float h = 0.0, s = 0.0, v = 0.0
         
         for denizen in self.random_neighborhood:
-            i_want_x = c_abs(int(x + self.possible_neighbors[denizen, 0]))
-            i_want_y = c_abs(int(y + self.possible_neighbors[denizen, 1]))
+            i_want_x = abs(x + self.possible_neighbors[denizen, 0])
+            i_want_y = abs(y + self.possible_neighbors[denizen, 1])
             
-            r, g, b = pilimage.getpixel((
-                i_want_x < pilimage.size[0] and i_want_x or pilimage.size[0]-1,
-                i_want_y < pilimage.size[1] and i_want_y or pilimage.size[1]-1,
-            ))
+            r, g, b = in_array[
+                i_want_x < in_array.shape[0] and i_want_x or in_array.shape[0]-1,
+                i_want_y < in_array.shape[1] and i_want_y or in_array.shape[1]-1,
+            ]
             
             self.rgb_to_hsv(<float>r, <float>g, <float>b, h, s, v)
-            out.append((h,s,v))
+            
+            out_array[denizen][0] = <uint32_t>h
+            out_array[denizen][1] = <uint32_t>s
+            out_array[denizen][2] = <uint32_t>v
         
-        return numpy.array(out, dtype=self.dt)
+        return out_array
     
     cdef regentrify(self):
         """
@@ -330,8 +343,11 @@ cdef class StentifordModel:
         derived from the algo's initial parameter values.)
         
         """
+        cdef int possible_neighbors_shape
+        
         self.random_neighborhood.clear()
-        denizen = random.randint(0, self.possible_neighbors.shape[0])
+        possible_neighbors_shape = self.possible_neighbors.shape[0]
+        denizen = random_int(possible_neighbors_shape)
         
         if denizen == self.possible_neighbors.shape[0]:
             denizen -= 1
