@@ -9,16 +9,13 @@ from imagekit import utils
 from imagekit.lib import Image
 from imagekit.models import ImageSpec
 from imagekit.processors import Adjust
-from imagekit.processors.resize import Crop, SmartCrop, Trim
+from imagekit.processors.resize import Crop, Trim
 
 
 class Photo(models.Model):
     original_image = models.ImageField(upload_to='photos')
     
     thumbnail = ImageSpec([Adjust(contrast=1.2, sharpness=1.1), Crop(50, 50)],
-            image_field='original_image', format='JPEG', quality=90)
-    
-    smartcropped_thumbnail = ImageSpec([Adjust(contrast=1.2, sharpness=1.1), SmartCrop(50, 50)],
             image_field='original_image', format='JPEG', quality=90)
     
     trimmed_thumbnail = ImageSpec([Trim(), Adjust(contrast=1.2, sharpness=1.1)],
@@ -71,11 +68,8 @@ class IKTest(TestCase):
         self.assertTrue(os.path.isfile(photo.thumbnail.file.name))
     
     def test_thumbnail_size(self):
-        """ Explicit and smart-cropped thumbnail size """
         self.assertEqual(self.photo.thumbnail.width, 50)
         self.assertEqual(self.photo.thumbnail.height, 50)
-        self.assertEqual(self.photo.smartcropped_thumbnail.width, 50)
-        self.assertEqual(self.photo.smartcropped_thumbnail.height, 50)
     
     def test_thumbnail_source_file(self):
         self.assertEqual(
