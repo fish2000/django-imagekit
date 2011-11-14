@@ -578,7 +578,7 @@ class HistogramBase(models.Model):
         out = []
         for channel in self.keys():
             for i in xrange(256):
-                out.append(getattr(self, "__%s_%02X" % (channel, i)))
+                out.append(getattr(self, "_%s_%02X" % (channel, i)))
         return to_matrix(out)
     
     @property
