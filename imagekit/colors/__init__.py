@@ -44,6 +44,11 @@ from xml.dom.minidom import parseString
 from random import random, choice
 
 try:
+    from xml.dom.minidom import parseString
+except ImportError:
+    parseString = lambda s: str(s)
+
+try:
     # NodeBox / Cocoa specific functionality.
     # Our library can still do a lot of interesting stuff without these!
     from nodebox.graphics import Grob, RGB, HSB, CMYK, CORNER
@@ -53,7 +58,8 @@ try:
 except:
     class Grob: pass
 
-try: import favorites as _favorites
+try:
+    import favorites as _favorites
 except:
     pass
 

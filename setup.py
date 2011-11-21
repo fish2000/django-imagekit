@@ -10,8 +10,19 @@ except ImportError:
     #from setuptools.command.test import test
 
 from Cython.Distutils import build_ext
-import numpy
 import imagekit
+
+try:
+    import numpy
+
+except ImportError:
+    
+    class FakeNumpy(object):
+        def get_include(self):
+            return "."
+    
+    numpy = FakeNumpy()
+
 
 setup(
     name='django-imagekit',

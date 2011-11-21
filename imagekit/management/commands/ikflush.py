@@ -8,7 +8,6 @@ from optparse import make_option
 
 from . import echo_banner
 
-
 class Command(BaseCommand):
     
     option_list = BaseCommand.option_list + (

@@ -1,4 +1,4 @@
-import base64, hashlib, numpy, uuid, signalqueue
+import base64, hashlib, uuid, signalqueue
 from django.conf import settings
 from django.db import models
 from django.db.models import fields
@@ -19,6 +19,11 @@ from imagekit import signals as iksignals
 from imagekit.widgets import RGBColorFieldWidget
 
 import imagekit.models
+
+try:
+    import numpy
+except ImportError:
+    numpy = None
 
 
 """

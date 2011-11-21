@@ -6,7 +6,7 @@ spec found.
 
 """
 
-import os, warnings, numpy
+import os, warnings
 from StringIO import StringIO
 from imagekit import processors
 from imagekit.lib import *
@@ -17,7 +17,13 @@ from django.core.urlresolvers import reverse
 from django.core.files.base import ContentFile
 from django.contrib.contenttypes.models import ContentType
 
-matrixlike = (numpy.matrixlib.matrix, numpy.ndarray)
+try:
+    import numpy
+except ImportError:
+    numpy = None
+    matrixlike = ()
+else:
+    matrixlike = (numpy.matrixlib.matrix, numpy.ndarray)
 
 class Spec(object):
     pre_cache = False

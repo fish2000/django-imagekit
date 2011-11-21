@@ -1,4 +1,4 @@
-import os, numpy
+import os
 from django import template
 from django.conf import settings
 from django.utils.safestring import mark_safe
@@ -11,6 +11,10 @@ from imagekit.etc.cieXYZ import cieYxy3
 
 register = template.Library()
 
+try:
+    import numpy
+except ImportError:
+    numpy = None
 
 class CIE31Options(AODict):
     """

@@ -9,8 +9,9 @@ which is a part of the source of dispcalGUI:
     http://dispcalgui.hoech.net/
 
 Copyright (c) 2011 OST, LLC. 
+
 """
-import locale, sys, os, re, struct, base64, math, numpy, types
+import locale, sys, os, re, struct, base64, math, types
 from imagekit.utils import hasallcase, ADict, AODict
 from imagekit.utils.memoize import memoize
 from imagekit.utils.encoding import get_encodings
@@ -19,6 +20,11 @@ from imagekit.etc import spectralarithmetic
 from hashlib import md5
 from time import localtime, mktime, strftime
 from UserString import UserString
+
+try:
+    import numpy
+except ImportError:
+    numpy = None
 
 try:
     from imagekit.utils import logg

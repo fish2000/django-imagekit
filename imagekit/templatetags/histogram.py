@@ -1,10 +1,15 @@
-import os, numpy
+import os
 from django import template
 from django.conf import settings
 from django.utils.safestring import mark_safe
 from imagekit.utils import oldcolors, seriescolors, logg
 
 register = template.Library()
+
+try:
+    import numpy
+except ImportError:
+    numpy = None
 
 @register.simple_tag
 def version():

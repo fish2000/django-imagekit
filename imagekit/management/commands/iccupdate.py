@@ -13,7 +13,6 @@ from imagekit.utils import icchash
 
 from . import echo_banner
 
-
 class Command(BaseCommand):
     
     option_list = BaseCommand.option_list + (

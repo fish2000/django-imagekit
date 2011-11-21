@@ -17,9 +17,14 @@ Created by FI$H 2000 on 2011-06-29.
 Copyright (c) 2011 OST, LLC. All rights reserved.
 
 """
-import sys, os, numpy, random
+import sys, os, random
 from PIL import Image
 from colorsys import rgb_to_hsv
+
+try:
+    import numpy
+except ImportError:
+    numpy = None
 
 class StentifordModel(object):
     

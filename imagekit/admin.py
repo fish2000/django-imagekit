@@ -1,5 +1,5 @@
 
-import os, numpy
+import os
 from django.core import urlresolvers
 from django.contrib import admin
 
@@ -11,6 +11,11 @@ from imagekit.utils import logg
 from imagekit.etc.profileinfo import profileinfo
 from imagekit.etc.cieXYZ import cieYxy3
 import imagekit.models
+
+try:
+    import numpy
+except ImportError:
+    numpy = None
 
 class ICCModelAdmin(admin.ModelAdmin):
     

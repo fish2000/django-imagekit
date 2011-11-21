@@ -25,12 +25,17 @@ Here's the latest list of supported PIL image modes:
     http://www.pythonware.com/library/pil/handbook/index.htm
 
 """
-import numpy, types
+import types
 from imagekit.lib import *
 from imagekit.neuquant import NeuQuant
 #from imagekit.stentiford import StentifordModel
 from imagekit.utils import logg, entropy
 from imagekit.utils.memoize import memoize
+
+try:
+    import numpy
+except ImportError:
+    numpy = None
 
 class ExtInterceptor(type):
     
@@ -38,41 +43,7 @@ class ExtInterceptor(type):
         types.FunctionType, types.MethodType, types.UnboundMethodType, types.BufferType)
     
     def __new__(cls, name, bases, attrs):
-        try:
-            from imagekit.ext import processors
-        except ImportError:
-            allnames = set()
-        else:
-            allnames = set([base.__name__ for base in bases]).union((name,))
-        
-        newattrs = {}
-        thisname = name
-        
-        for name in allnames:
-            if hasattr(processors, name):
-                
-                def process(cls, img, fmt, obj):
-                    if hasattr(cls, '__ext__'):
-                        logg.info("+++ %s processing with %s" % (name, cls.__ext__.__class__))
-                        return cls.__ext__.process(img, fmt, obj)
-                    return cls._process(img, fmt, obj)
-                
-                non_functions = dict(filter(lambda attr: \
-                    type(attr[1]) not in cls.do_not_intercept and \
-                    not attr[0].startswith("_") and \
-                    not attr[0].startswith("process"),
-                    attrs.items()))
-                
-                newattrs['__ext__'] = getattr(processors, name)(**non_functions)
-                newattrs['process'] = classmethod(process)
-                
-                if 'process' in attrs:
-                    newattrs['_process'] = attrs['process']
-                
-                break
-        
-        attrs.update(newattrs)
-        return super(ExtInterceptor, cls).__new__(cls, thisname, bases, attrs)
+        return super(ExtInterceptor, cls).__new__(cls, name, bases, attrs)
 
 
 class ImageProcessor(object):
