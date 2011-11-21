@@ -124,4 +124,4 @@ SQ_QUEUES = {
 SQ_WORKER_PORT = 11201
 SQ_ASYNC = False
 
-TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
+#TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'

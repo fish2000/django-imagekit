@@ -10,7 +10,7 @@ Copyright (c) 2011 Objects In Space And Time, LLC. All rights reserved.
 
 """
 
-import os, tempfile, shutil, logging
+import os, tempfile, shutil, logging, types, unittest
 from django.conf import settings
 import imagekit.schmettings
 imagekit.schmettings.__dict__.update({
@@ -37,7 +37,10 @@ if __name__ == '__main__':
         print "*** Starting test Redis server instance (pid = %s)" % rp.pid
     
     from django.core.management import call_command
-    call_command('test', 'imagekit.tests:IKTest',
+    
+    '''call_command('test', 'imagekit.tests:IKTest',
+        interactive=False, traceback=True, verbosity=2)'''
+    call_command('test', 'imagekit',
         interactive=False, traceback=True, verbosity=2)
     
     if rp is not None:
@@ -54,8 +57,8 @@ if __name__ == '__main__':
     shutil.rmtree(tempdata)
     
     #print ""
-    import sys
-    sys.exit(0)
+    #import sys
+    #sys.exit(0)
 
 from django.test import TestCase
 from django.test.utils import override_settings as override
@@ -68,8 +71,6 @@ from imagekit.models import ImageModel, ImageWithMetadata
 from imagekit.models import _storage
 from imagekit.specs import ImageSpec
 from imagekit.lib import *
-
-
 
 class ResizeToWidth(processors.Resize):
     width = 100
@@ -166,8 +167,6 @@ class TestTrimmer(ImageSpec):
     access_as = 'trimmed'
     processors = [Trimmer]
 
-
-
 class TestImage(ImageModel):
     """
     Minimal ImageModel class for testing.
@@ -183,7 +182,7 @@ class TestImage(ImageModel):
 class TestImageM(ImageWithMetadata):
     """
     Minimal ImageWithMetadata class for testing.
-
+    
     """
     class IKOptions:
         spec_module = 'imagekit.tests'
@@ -224,13 +223,45 @@ def get_image():
 
 get_image.imgstr = None
 
+class TestMethodReferenceFixerUpper(type):
+    def __init__(cls, name, bases, attrs):
+        basefuncs = dict(filter(lambda attr: type(attr[1]) in (types.FunctionType, types.MethodType, types.UnboundMethodType) and (not attr[0].lower().startswith('setup')), attrs.items()))
+        for funcname, func in basefuncs.items():
+            if hasattr(func, 'im_class'):
+                func.im_class = cls
+        type.__init__(cls, name, bases, attrs)
+
+class TestCopier(TestMethodReferenceFixerUpper):
+    def __new__(cls, name, bases, attrs):
+        import types
+        from copy import deepcopy
+        
+        for base in bases:
+            basefuncs = dict(filter(lambda attr: type(attr[1]) in (types.FunctionType, types.MethodType) and (not attr[0].lower().startswith('setup')), base.__dict__.items()))
+            
+            #print "--- Copying %s test funcs from base %s" % (len(basefuncs), base.__name__)
+            for funcname, func in basefuncs.items():
+                attrs[funcname] = deepcopy(func)
+            if 'tearDown' in base.__dict__:
+                attrs['tearDown'] = deepcopy(base.__dict__.get('tearDown'))
+        
+        return type(name, (TestCase,), attrs)
+
 class IKTest(TestCase):
     """
     Base TestCase class.
     
     """
     
+    __metaclass__ = TestMethodReferenceFixerUpper
     __test__ = True
+    
+    def __init__(self, *args, **kwargs):
+        basefuncs = dict(filter(lambda attr: type(attr[1]) in (types.UnboundMethodType,) and (not attr[0].lower().startswith('setup')), self.__dict__.items()))
+        for funcname, func in basefuncs.items():
+            if hasattr(func, 'im_class'):
+                func.im_class = type(self.__class__.__name__, self.__class__, dict(self.__class__.__dict__))
+        super(self.__class__, self).__init__(*args, **kwargs)
     
     def generate_image(self):
         tmp = tempfile.TemporaryFile()
@@ -240,6 +271,9 @@ class IKTest(TestCase):
     
     def get_image(self):
         return get_image()
+    
+    def runTest(self):
+        return True
     
     def setUp(self):
         print ""
@@ -305,7 +339,6 @@ class IKTest(TestCase):
         pm.delete(clear_cache=True)
         
         self.failIf(pm._ik.storage.exists(pth))
-        
     
     def test_setup(self):
         self.assertEqual(self.p.image.width, 800)
@@ -360,24 +393,6 @@ class IKTest(TestCase):
         self.p.delete(clear_cache=True)
         self.failIf(_storage.exists(pth))
 
-
-class TestCopier(type):
-    def __new__(cls, name, bases, attrs):
-        import types
-        from copy import deepcopy
-        
-        for base in bases:
-            basefuncs = dict(filter(lambda attr: type(attr[1]) in (types.FunctionType, types.MethodType) and (not attr[0].lower().startswith('setup')), base.__dict__.items()))
-            
-            #print "--- Copying %s test funcs from base %s" % (len(basefuncs), base.__name__)
-            for funcname, func in basefuncs.items():
-                attrs[funcname] = deepcopy(func)
-            if 'tearDown' in base.__dict__:
-                attrs['tearDown'] = deepcopy(base.__dict__.get('tearDown'))
-        
-        return type(name, (TestCase,), attrs)
-
-
 class IKSyncTest(IKTest):
     
     __metaclass__ = TestCopier
@@ -407,5 +422,9 @@ class IKSyncTest(IKTest):
             img.close()
 
 def suite():
-    tests = [IKTest, IKSyncTest]
-    return [unittest.TestSuite(map(unittest.TestLoader().loadTestsFromTestCase, tests))]
+    
+    testcases = []
+    for test in (IKTest, IKSyncTest):
+        testcases.append(unittest.TestLoader().loadTestsFromTestCase(test))
+    
+    return unittest.TestSuite(testcases)
