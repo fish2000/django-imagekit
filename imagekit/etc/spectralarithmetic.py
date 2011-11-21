@@ -12,7 +12,13 @@ from dispcalGUI:
 Copyright (c) 2011 OST, LLC. 
 """
 
-import math, numpy
+import math
+
+try:
+    import numpy
+except ImportError:
+    numpy = None
+
 
 CIEilluminants = {
 	# en.wikipedia.org/wiki/Standard_illuminant
