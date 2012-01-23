@@ -23,7 +23,10 @@ except ImportError:
     numpy = None
     matrixlike = ()
 else:
-    matrixlike = (numpy.matrixlib.matrix, numpy.ndarray)
+    if hasattr(numpy, 'matrixlib'):
+        matrixlike = (numpy.matrixlib.matrix, numpy.ndarray)
+    else:
+        matrixlike = (numpy.ndarray,)
 
 class Spec(object):
     pre_cache = False

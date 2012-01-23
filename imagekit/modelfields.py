@@ -20,10 +20,18 @@ from imagekit.widgets import RGBColorFieldWidget
 
 import imagekit.models
 
+
 try:
     import numpy
 except ImportError:
     numpy = None
+    matrixlike = ()
+else:
+    if hasattr(numpy, 'matrixlib'):
+        matrixlike = (numpy.matrixlib.matrix, numpy.ndarray)
+    else:
+        matrixlike = (numpy.ndarray,)
+
 
 
 """
@@ -445,7 +453,7 @@ class HistogramChannelDescriptor(object):
         
         histogram_channel = instance.__dict__[self.field.original_channel]
         
-        if isinstance(histogram_channel, (numpy.matrixlib.matrix, numpy.ndarray)):
+        if isinstance(histogram_channel, matrixlike):
             if not issubclass(histogram_channel.dtype, int):
                 return histogram_channel.astype(int)
             return histogram_channel

@@ -185,7 +185,8 @@ class ImageModel(models.Model):
                 app_label=content_type.app_label, modlcls=content_type.model, pk=self.pk))
     
     def _dominant(self):
-        return self.pilimage.quantize(1).convert('RGB').getpixel((0, 0))
+        return self.pilimage.convert('RGB').resize((1, 1), Image.NEAREST).getpixel((0, 0))
+        #return self.pilimage.quantize(1).convert('RGB').getpixel((0, 0))
     
     def _mean(self):
         return ImageStat.Stat(self.pilimage.convert('RGB')).mean
