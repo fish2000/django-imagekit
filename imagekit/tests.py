@@ -38,8 +38,11 @@ if __name__ == '__main__':
     
     from django.core.management import call_command
     
-    '''call_command('test', 'imagekit.tests:IKTest',
-        interactive=False, traceback=True, verbosity=2)'''
+    '''
+    call_command('test', 'imagekit.tests:IKTest',
+        interactive=False, traceback=True, verbosity=2)
+    '''
+    
     call_command('test', 'imagekit',
         interactive=False, traceback=True, verbosity=2)
     
@@ -49,8 +52,10 @@ if __name__ == '__main__':
         os.kill(rp.pid, signal.SIGKILL)
     
     print ""
+    '''
     call_command('test', 'imagekit.tests:IKSyncTest',
         interactive=False, traceback=True, verbosity=2)
+    '''
     
     tempdata = imagekit.schmettings.tempdata
     print "*** Deleting test data: %s" % tempdata
@@ -172,6 +177,10 @@ class TestImage(ImageModel):
     Minimal ImageModel class for testing.
     
     """
+    class Meta:
+        app_label = 'imagekit'
+        db_table = 'imagekit_testimage'
+    
     class IKOptions:
         spec_module = 'imagekit.tests'
         storage = _storage
@@ -184,6 +193,10 @@ class TestImageM(ImageWithMetadata):
     Minimal ImageWithMetadata class for testing.
     
     """
+    class Meta:
+        app_label = 'imagekit'
+        db_table = 'imagekit_testimagem'
+    
     class IKOptions:
         spec_module = 'imagekit.tests'
         storage = _storage
