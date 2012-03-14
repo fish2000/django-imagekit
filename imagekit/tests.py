@@ -32,7 +32,7 @@ if __name__ == '__main__':
     if settings.SQ_ASYNC:
         import subprocess, os, signalqueue
         rp = subprocess.Popen(['redis-server',
-            "%s" % os.path.join(os.path.dirname(signalqueue.__file__), 'settings', 'redis.conf')],
+            "%s" % os.path.join(os.path.dirname(signalqueue.__file__), 'etc', 'redis.conf')],
             stdout=subprocess.PIPE)
         print "*** Starting test Redis server instance (pid = %s)" % rp.pid
     
