@@ -179,8 +179,11 @@ class ImageModel(models.Model):
     
     @property
     def view_url(self):
+        from django.utils.importlib import import_module
         content_type = ContentType.objects.get_for_model(self.__class__)
         return reverse('imagekit:image',
+            current_app='imagekit',
+            urlconf=import_module('imagekit.urls'),
             kwargs=dict(
                 app_label=content_type.app_label, modlcls=content_type.model, pk=self.pk))
     
@@ -939,7 +942,7 @@ class ICCModel(models.Model):
             modl.objects.filter(**{ lookup: self.icchash })
         
         else:
-            logg.info("ICCModel.get_profiled_images() failed for model %s -- no ICCHashField defined and no profile hash lookup methods found" % modl.__class__.__name__)
+            logg.info("ICCModel.get_profiled_images() found no ICCHashField or hash lookup methods on instance %s" % modl.__class__.__name__)
         
         return modl.objects.none()
     

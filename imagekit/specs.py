@@ -231,8 +231,11 @@ class FileAccessor(AccessorBase):
     
     @property
     def view_url(self):
+        from django.utils.importlib import import_module
         content_type = ContentType.objects.get_for_model(self._obj.__class__)
         return reverse('imagekit:image_property',
+            current_app='imagekit',
+            urlconf=import_module('imagekit.urls'),
             kwargs=dict(
                 prop_name=self.spec.name(),
                 app_label=content_type.app_label, modlcls=content_type.model, pk=self._obj.pk))

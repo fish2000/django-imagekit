@@ -152,14 +152,14 @@ class ICCModelAdmin(admin.ModelAdmin):
                 numpy.dot(fullreversal, XYZ_wtpt).squeeze()
             )
             
-            logg.info("XYZ_wtpt: %s" % XYZ_wtpt)
-            logg.info("RGB_wtpt: %s" % RGB_wtpt)
+            #logg.info("XYZ_wtpt: %s" % XYZ_wtpt)
+            #logg.info("RGB_wtpt: %s" % RGB_wtpt)
             
             rgb_wtpt = compander(arg=RGB_wtpt)
-            logg.info("rgb_wtpt: %s" % rgb_wtpt)
+            #logg.info("rgb_wtpt: %s" % rgb_wtpt)
             
             rgb_wtpt_hex = compander(arg=RGB_wtpt, as_hex=True)
-            logg.info("rgb_wtpt_hex: %s" % rgb_wtpt_hex)
+            #logg.info("rgb_wtpt_hex: %s" % rgb_wtpt_hex)
             
             # tristimulii
             if 'rXYZ' in icc.tags.keys():
