@@ -30,7 +30,7 @@ rp = None
 if __name__ == '__main__':
     
     if settings.SQ_ASYNC:
-        import subprocess, os, signalqueue
+        import subprocess, signalqueue
         rp = subprocess.Popen(['redis-server',
             "%s" % os.path.join(os.path.dirname(signalqueue.__file__), 'etc', 'redis.conf')],
             stdout=subprocess.PIPE)
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     #sys.exit(0)
 
 from django.test import TestCase
-from django.test.utils import override_settings as override
+#from django.test.utils import override_settings as override
 
 from django.core.files.base import ContentFile
 from django.db import models
@@ -75,7 +75,7 @@ from imagekit import processors
 from imagekit.models import ImageModel, ImageWithMetadata
 from imagekit.models import _storage
 from imagekit.specs import ImageSpec
-from imagekit.lib import *
+from imagekit.lib import Image, ICCProfile, IK_ROOT
 
 class ResizeToWidth(processors.Resize):
     width = 100
@@ -246,7 +246,6 @@ class TestMethodReferenceFixerUpper(type):
 
 class TestCopier(TestMethodReferenceFixerUpper):
     def __new__(cls, name, bases, attrs):
-        import types
         from copy import deepcopy
         
         for base in bases:
@@ -292,7 +291,7 @@ class IKTest(TestCase):
         print ""
         
         # dispatch all signals asynchronously
-        with self.settings(SQ_ASYNC=True):
+        with self.settings(SQ_ASYNC=True, SQ_RUNMODE='SQ_ASYNC_REQUEST'):
             import signalqueue
             queues = signalqueue.worker.backends.ConnectionHandler(settings.SQ_QUEUES, 4)
             signalqueue.worker.queues = queues
@@ -346,6 +345,12 @@ class IKTest(TestCase):
         
         self.assertEqual(pm.image.width, 800)
         self.assertEqual(pm.image.height, 600)
+        self.assertEqual(pm.cropped.width, 100)
+        self.assertEqual(pm.cropped.height, 100)
+        self.assertEqual(pm.smartcropped.width, 100)
+        self.assertEqual(pm.smartcropped.height, 100)
+        self.assertEqual(pm.smartercropped.width, pm.atkinsonized.width)
+        self.assertEqual(pm.smartercropped.height, pm.atkinsonized.height)
         
         pth = pm.image.name
         pm.save()
@@ -417,7 +422,7 @@ class IKSyncTest(IKTest):
         # dispatch all signals synchronously
         from django.conf import settings
         settings.SQ_RUNMODE = 'SQ_SYNC'
-        with self.settings(SQ_RUNMODE='SQ_SYNC'):
+        with self.settings(SQ_ASYNC=False, SQ_RUNMODE='SQ_SYNC'):
             import signalqueue
             queues = signalqueue.worker.backends.ConnectionHandler(settings.SQ_QUEUES, 1)
             signalqueue.worker.queues = queues

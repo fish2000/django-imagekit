@@ -10,6 +10,7 @@ except ImportError:
     #from setuptools.command.test import test
 
 from Cython.Distutils import build_ext
+from distutils.sysconfig import get_python_inc
 import imagekit
 
 try:
@@ -79,6 +80,7 @@ setup(
     ),
     include_dirs=[
         numpy.get_include(),
+        get_python_inc(plat_specific=1),
         ".",
     ],
     

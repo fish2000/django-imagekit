@@ -1,4 +1,4 @@
-import base64, hashlib, uuid, signalqueue
+import base64, hashlib, uuid
 from django.conf import settings
 from django.db import models
 from django.db.models import fields
@@ -14,7 +14,6 @@ from ICCProfile import ICCProfile
 from imagekit import colors
 from imagekit.utils import logg
 from imagekit.utils import EXIF
-from imagekit.utils.json import json
 from imagekit import signals as iksignals
 from imagekit.widgets import RGBColorFieldWidget
 
@@ -24,7 +23,6 @@ import imagekit.models
 try:
     import numpy
 except ImportError:
-    numpy = None
     matrixlike = ()
 else:
     if hasattr(numpy, 'matrixlib'):
@@ -298,6 +296,7 @@ class EXIFMetaField(models.TextField):
     def get_db_prep_save(self, value, **kwargs):
         if not value or value == "":
             return None
+        from imagekit.utils.json import json
         value = json.dumps(value)
         return super(EXIFMetaField, self).get_db_prep_save(value, **kwargs)
     
@@ -345,12 +344,12 @@ class EXIFMetaField(models.TextField):
             im = instance.image
             im.seek(0)
             exif_dict = EXIF.process_file(im)
-        except Exception, err:
+        except Exception:
             try:
                 im = instance.image
                 im.seek(0)
                 exif_dict = EXIF.process_file(im, details=False)
-            except Exception, err:
+            except Exception:
                 exif_dict = {}
         
         # delete any JPEGThumbnail data we might have found
@@ -761,7 +760,8 @@ class Histogram(fields.CharField):
                 related_histogram.__class__.__name__,
                 instance.__class__.__name__, self.name, instance.id))
             
-            iksignals.clear_histogram_channels.send_now(sender=related_histogram.__class__,
+            iksignals.clear_histogram_channels.send_now(
+                sender=related_histogram.__class__,
                 instance=related_histogram)
         
         # save if sent asynchronously
@@ -769,8 +769,7 @@ class Histogram(fields.CharField):
         enqueue_runmode = kwargs.get('enqueue_runmode', None)
         if dequeue_runmode is not None:
             if not dequeue_runmode == enqueue_runmode:
-
-                    related_histogram.save_base()
+                related_histogram.save_base(cls=related_histogram.__class__)
     
     def south_field_triple(self):
         from south.modelsinspector import introspector

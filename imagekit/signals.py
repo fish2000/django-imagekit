@@ -26,53 +26,53 @@ from signalqueue.dispatcher import AsyncSignal
 
 
 pre_cache = AsyncSignal(providing_args={
-    'instance':             mappings.ModelInstanceMapper,
+    'instance':             mappings.ModelIDMapper,
 })
 
 clear_cache = AsyncSignal(providing_args={
-    'instance':             mappings.ModelInstanceMapper,
+    'instance':             mappings.ModelIDMapper,
 })
 
 
 prepare_spec = AsyncSignal(providing_args={
-    'instance':             mappings.ModelInstanceMapper,
-    'spec_name':            mappings.Mapper,
+    'instance':             mappings.ModelIDMapper,
+    'spec_name':            mappings.LiteralValueMapper,
 })
 
 delete_spec = AsyncSignal(providing_args={
-    'instance':             mappings.ModelInstanceMapper, 
-    'spec_name':            mappings.Mapper,
+    'instance':             mappings.ModelIDMapper, 
+    'spec_name':            mappings.LiteralValueMapper,
 })
 
 refresh_hash = AsyncSignal(providing_args={
-    'instance':             mappings.ModelInstanceMapper,
+    'instance':             mappings.ModelIDMapper,
 })
 
 
 refresh_color = AsyncSignal(providing_args={
-    'instance':             mappings.ModelInstanceMapper,
+    'instance':             mappings.ModelValueMapper,
 })
 
 
 refresh_icc_data = AsyncSignal(providing_args={
-    'instance':             mappings.ModelInstanceMapper,
+    'instance':             mappings.ModelValueMapper,
 })
 
 
 refresh_exif_data = AsyncSignal(providing_args={
-    'instance':             mappings.ModelInstanceMapper,
+    'instance':             mappings.ModelValueMapper,
 })
 
 
 save_related_histogram = AsyncSignal(providing_args={
-    'instance':             mappings.ModelInstanceMapper,
+    'instance':             mappings.ModelIDMapper,
 })
 
 refresh_histogram_channel = AsyncSignal(providing_args={
-    'instance':             mappings.ModelInstanceMapper, 
-    'channel_name':         mappings.Mapper,
+    'instance':             mappings.ModelIDMapper, 
+    'channel_name':         mappings.LiteralValueMapper,
 })
 
 clear_histogram_channels = AsyncSignal(providing_args={
-    'instance':             mappings.ModelInstanceMapper, 
+    'instance':             mappings.ModelIDMapper, 
 })

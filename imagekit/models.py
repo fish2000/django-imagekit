@@ -20,7 +20,7 @@ from colorsys import rgb_to_hls, hls_to_rgb
 from delegate import DelegateManager, delegate
 from imagekit import signals as iksignals
 from imagekit import specs
-from imagekit.lib import *
+from imagekit.lib import Image, ImageFile, ImageCms, ImageStat, IK_sRGB, cv
 from imagekit.options import Options
 from imagekit.modelfields import VALID_CHANNELS, to_matrix
 from imagekit.ICCProfile import ICCProfile
@@ -133,9 +133,8 @@ class ImageModel(models.Model):
         if self.pk:
             if self._imgfield.name:
                 try:
-                    #out = Image.open(self._imgfield.file)
                     out = Image.open(self._storage.open(self._imgfield.name))
-                except IOError, err:
+                except IOError:
                     return None
                 else:
                     self._pilimage = out

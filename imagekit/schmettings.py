@@ -87,7 +87,6 @@ INSTALLED_APPS = (
 )
 
 # Logging Configuration
-import logging
 LOGGING = dict(
     version=1,
     disable_existing_loggers=False,
@@ -100,11 +99,17 @@ LOGGING = dict(
         'imagekit': { 'handlers': ['default'], 'level': 'DEBUG', 'propagate': False },
         'signalqueue': { 'handlers': ['default'], 'level': 'INFO', 'propagate': False },
     },
+    root={ 'handlers': ['default'], 'level': 'INFO', 'propagate': False },
 )
 
 
 SQ_QUEUES = {
-    'default': {                                                # you need at least one dict named 'default' in SQ_QUEUES
+    'default': {
+        'ENGINE': 'signalqueue.worker.backends.DatabaseQueueProxy',
+        'INTERVAL': 30, # 1/3 sec
+        'OPTIONS': dict(app_label='signalqueue', modl_name='EnqueuedSignal'),
+    },
+    'shmefault': {                                                # you need at least one dict named 'default' in SQ_QUEUES
         'ENGINE': 'signalqueue.worker.backends.RedisSetQueue',  # required - full path to a QueueBase subclass
         'INTERVAL': 30, # 1/3 sec
         'OPTIONS': dict(port=4332),
@@ -113,11 +118,6 @@ SQ_QUEUES = {
         'ENGINE': 'signalqueue.worker.backends.RedisQueue',
         'INTERVAL': 30, # 1/3 sec
         'OPTIONS': dict(port=4332),
-    },
-    'db': {
-        'ENGINE': 'signalqueue.worker.backends.DatabaseQueueProxy',
-        'INTERVAL': 30, # 1/3 sec
-        'OPTIONS': dict(app_label='signalqueue', modl_name='EnqueuedSignal'),
     },
 }
 
