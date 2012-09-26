@@ -194,7 +194,9 @@ class ICCTransform(ImageProcessor):
     # all it needs to do is set the kwarg proofing=False.
     @classmethod
     def process(cls, img, fmt, obj, TXID=None):
-        return ICCProofTransform.process(img, fmt, obj, source=cls.source, destination=cls.destination, proofing=False, TXID=TXID)
+        return ICCProofTransform.process(img, fmt, obj,
+            source=cls.source, destination=cls.destination,
+            proofing=False, TXID=TXID)
 
 
 class HSVArray(ImageProcessor):
